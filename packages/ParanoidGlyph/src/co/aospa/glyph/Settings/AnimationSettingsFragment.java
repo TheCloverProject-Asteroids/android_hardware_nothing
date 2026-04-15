@@ -431,11 +431,8 @@ public class AnimationSettingsFragment
             return true;
         }
 
-        if (preferenceKey.equals(Constants.GLYPH_FLIP_SUB_ANIMATION_ENABLE)) {
-            mGlyphAnimationPreference.updateAnimation((Boolean) newValue);
-        }
-
-        if (preferenceKey.equals(reverseAnimationKey)) {
+        if (preferenceKey.equals(reverseAnimationKey)
+                || preferenceKey.equals(Constants.GLYPH_FLIP_SUB_ANIMATION_ENABLE)) {
             mGlyphAnimationPreference.updateAnimation(isAnimationEnabled(), 1500, (Boolean) newValue);
         }
 
