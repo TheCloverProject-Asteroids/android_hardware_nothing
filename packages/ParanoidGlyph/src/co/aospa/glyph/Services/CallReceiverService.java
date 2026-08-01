@@ -32,6 +32,7 @@ import android.util.Log;
 
 import co.aospa.glyph.Manager.AnimationManager;
 import co.aospa.glyph.Manager.SettingsManager;
+import co.aospa.glyph.Constants.Constants;
 import co.aospa.glyph.Utils.ResourceUtils;
 
 public class CallReceiverService extends InCallService {
@@ -117,6 +118,10 @@ public class CallReceiverService extends InCallService {
 
     @Override
     public IBinder onBind(Intent intent) {
+
+        if (Constants.CONTEXT == null) {
+            Constants.CONTEXT = getApplicationContext(); 
+        } 
         if (!SettingsManager.isGlyphCallEnabled()) {
             return null;
         }
