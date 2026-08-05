@@ -46,15 +46,24 @@ public class TorchTileService extends TileService {
         }
     };
 
+    private void ensureContext() {
+        if (Constants.CONTEXT == null) {
+            Constants.CONTEXT = getApplicationContext();
+        }
+    }
+ 
     @Override
     public void onCreate() {
         super.onCreate();
         IntentFilter filter = new IntentFilter(ACTION_UPDATE_TILE);
         registerReceiver(mUpdateReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
-        if (Constants.CONTEXT == null) {
-            Constants.CONTEXT = getApplicationContext();
+        ensureContext();
+        
+        if (Constants.CONTEXT != null) {
+            if (!TorchService.isRunning) ServiceUtils.startTorchService();
+        } else {
+            updateState();
         }
-        if (!TorchService.isRunning) ServiceUtils.startTorchService();
     }
 
     @Override
@@ -69,12 +78,12 @@ public class TorchTileService extends TileService {
     @Override
     public void onStartListening() {
         super.onStartListening();
-        if (!TorchService.isRunning) ServiceUtils.startTorchService();
+        if (!TorchService.isRunning && Constants.CONTEXT != null) ServiceUtils.startTorchService();
         updateState();
     }
 
     private void updateState() {
-        if (!TorchService.isRunning) {
+        if (!TorchService.isRunning || Constants.CONTEXT == null) {
             getQsTile().setState(Tile.STATE_UNAVAILABLE);
             getQsTile().setSubtitle(getString(R.string.glyph_accessibility_quick_settings_disabled));
             getQsTile().updateTile();
@@ -110,6 +119,7 @@ public class TorchTileService extends TileService {
     @Override
     public void onTileRemoved() {
         super.onTileRemoved();
+        ensureContext();
         ServiceUtils.stopTorchService();
     }
 
