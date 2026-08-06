@@ -98,6 +98,8 @@
     <string name="glyph_settings_notifs_ogg_sync_toggle_title">Sync with notification sound</string>
     <string name="glyph_settings_notifs_ogg_sync_toggle_summary">Use animation from notification sound (when available)</string>
 
+    <string name="glyph_settings_call_additional_hint">New CSV animations can placed in /sdcard/Glyph/Call</string>
+
     <string name="glyph_settings_notifs_title">Notifications</string>
     <string name="glyph_settings_notifs_toggle_title">Notification animation</string>
     <string name="glyph_settings_notifs_toggle_summary">Flash LEDs on new notifications</string>
@@ -106,6 +108,8 @@
     <string name="glyph_settings_notifs_sub_animations_title">@string/glyph_settings_sub_animations_title</string>
     <string name="glyph_settings_notifs_sub_essential_title">Essential Notifications</string>
     <string name="glyph_settings_notifs_sub_essential_summary">Essential Glyph will be displayed until Essential notifications are read or dismissed</string>
+
+    <string name="glyph_settings_notifs_additional_hint">New CSV animations can placed in /sdcard/Glyph/Notifications</string>
 
     <string name="glyph_settings_sub_animations_reverse_toggle_title">Reverse animation</string>
     <string name="glyph_settings_sub_animations_reverse_toggle_summary">Play animation from end to beginning</string>

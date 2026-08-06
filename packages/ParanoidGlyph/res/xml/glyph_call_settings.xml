@@ -56,6 +56,11 @@
             android:defaultValue="false"
             android:summary="@string/glyph_settings_sub_animations_reverse_toggle_summary" />
 
+        <com.android.settingslib.widget.FooterPreference
+            android:key="glyph_call_csv_hint"
+            android:title="@string/glyph_settings_call_additional_hint"
+            android:selectable="false" />
+
     <PreferenceCategory>
         <Preference
             android:key="glyph_settings_call_sub_contact_select"

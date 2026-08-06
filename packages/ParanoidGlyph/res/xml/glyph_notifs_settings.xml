@@ -68,6 +68,11 @@
                 android:positiveButtonText="@android:string/ok"
                 android:negativeButtonText="@android:string/cancel" />
 
+            <com.android.settingslib.widget.FooterPreference
+            android:key="glyph_notifs_csv_hint"
+            android:title="@string/glyph_settings_notifs_additional_hint"
+            android:selectable="false" />
+
     </PreferenceCategory>
 
         <PreferenceCategory
