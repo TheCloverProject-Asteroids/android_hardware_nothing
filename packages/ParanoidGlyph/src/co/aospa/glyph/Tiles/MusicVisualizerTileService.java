@@ -88,8 +88,7 @@ public class MusicVisualizerTileService extends TileService {
         SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         sharedPrefs.edit().putBoolean(Constants.GLYPH_MUSIC_VISUALIZER_ENABLE, enabled).apply();
         ServiceUtils.checkGlyphService();
-        if (enabled && (SettingsManager.Pulse.isPulseEnabled()
-                || SettingsManager.Pulse.isLockscreenPulseEnabled())) {
+        if (enabled && SettingsManager.Pulse.isAnyPulseEnabled()) {
             showToast(R.string.glyph_music_visualizer_pulse_toast_message);
         }
     }

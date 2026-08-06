@@ -448,5 +448,10 @@ public final class SettingsManager {
             return Settings.Secure.getIntForUser(ctx.getContentResolver(),
                     Constants.PULSE_ENABLED_SETTING, 0, currentUser) == 1;
         }
+
+        public static boolean isAnyPulseEnabled() {
+            return isLockscreenPulseEnabled() || isPulseEnabled();
+        }
+
     }
 }

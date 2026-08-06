@@ -322,7 +322,7 @@ public class SettingsFragment extends SettingsBasePreferenceFragment implements 
                 updateBatterySaver((Boolean) newValue);
             }
             case Constants.GLYPH_MUSIC_VISUALIZER_ENABLE -> {
-                if ((Boolean) newValue && SettingsManager.Pulse.isPulseEnabled()) {
+                if ((Boolean) newValue && SettingsManager.Pulse.isAnyPulseEnabled()) {
                     showDialog(
                             requireActivity(),
                             R.string.glyph_settings_music_visualizer_warning_title,
