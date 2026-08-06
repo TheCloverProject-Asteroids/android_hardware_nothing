@@ -154,6 +154,7 @@ public class SettingsFragment extends SettingsBasePreferenceFragment implements 
         mBatterySaverPreference.setOnPreferenceChangeListener(this);
 
         mFlipPreference = findPreference(Constants.GLYPH_FLIP_ENABLE);
+        mFlipPreference.setSwitchEnabled(glyphEnabled);
         mFlipPreference.setEnabled(glyphEnabled);
         mFlipPreference.setChecked(SettingsManager.isGlyphFlipEnabled());
         mFlipPreference.setOnPreferenceChangeListener(this);
