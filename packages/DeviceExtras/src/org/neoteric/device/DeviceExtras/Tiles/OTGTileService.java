@@ -27,6 +27,7 @@ import android.service.quicksettings.Tile;
 import android.service.quicksettings.TileService;
 import androidx.preference.PreferenceManager;
 
+import org.neoteric.device.DeviceExtras.Constants;
 import org.neoteric.device.DeviceExtras.DeviceExtras;
 
 public class OTGTileService extends TileService {
@@ -54,6 +55,7 @@ public class OTGTileService extends TileService {
     @Override
     public void onStartListening() {
         super.onStartListening();
+        if (Constants.CONTEXT == null) Constants.CONTEXT = getApplicationContext();
         Intent intent = new Intent(this, OTGModeSwitch.class);
         bindService(intent, connection, Context.BIND_AUTO_CREATE);
         updateState();
@@ -71,7 +73,7 @@ public class OTGTileService extends TileService {
     private void updateState() {
         Tile mTile = getQsTile();
         if (mTile != null) {
-            boolean available = OTGModeSwitch.isAvailable();
+            boolean available = OTGModeSwitch.isAvailable() && Constants.CONTEXT != null;
             if (available) { 
                 boolean enabled = getEnabled();
                 mTile.setSubtitle(enabled ?

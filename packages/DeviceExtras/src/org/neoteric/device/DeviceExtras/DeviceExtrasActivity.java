@@ -21,6 +21,7 @@ import androidx.fragment.app.Fragment;
 import android.os.Bundle;
 import androidx.preference.PreferenceFragment;
 import androidx.preference.PreferenceManager;
+import org.neoteric.device.DeviceExtras.Constants;
 
 import com.android.settingslib.collapsingtoolbar.CollapsingToolbarBaseActivity;
 
@@ -31,6 +32,10 @@ public class DeviceExtrasActivity extends CollapsingToolbarBaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (Constants.CONTEXT == null) {
+            Constants.CONTEXT = getApplicationContext();
+        }
 
         Fragment fragment = getSupportFragmentManager().findFragmentById(com.android.settingslib.collapsingtoolbar.R.id.content_frame);
 	if (fragment == null) {
