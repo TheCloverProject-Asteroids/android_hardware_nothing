@@ -1,0 +1,16 @@
+-keep class com.nothing.assistkey.KeyHandler {
+    public <init>(android.content.Context);
+    *;
+}
+
+-keep class * implements com.android.internal.os.DeviceKeyHandler {
+    *;
+}
+
+-keep class com.nothing.assistkey.SettingsActivity { *; }
+-keep class com.nothing.assistkey.SettingsFragment { *; }
+-keep class com.nothing.assistkey.AppPickerActivity { *; }
+-keep class com.nothing.assistkey.ConfigPanelSearchIndexablesProvider { *; }
+-keep class com.nothing.assistkey.AssistKeyTileService { *; }
+-keep class com.nothing.assistkey.AssistKeyAccessibilityService { *; }
+-keep class com.nothing.assistkey.BootReceiver { *; }

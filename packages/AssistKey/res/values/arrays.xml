@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2024 The LineageOS Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources>
+    <string-array name="assist_key_action_entries">
+        <item>@string/action_none</item>
+        <item>@string/action_voice_assistant</item>
+        <item>@string/action_torch</item>
+        <item>@string/action_camera</item>
+        <item>@string/action_screenshot</item>
+        <item>@string/action_ringer_mode</item>
+        <item>@string/action_dnd</item>
+        <item>@string/action_voice_recorder</item>
+        <item>@string/action_media_play_pause</item>
+        <item>@string/action_media_next</item>
+        <item>@string/action_media_prev</item>
+        <item>@string/action_screen_off</item>
+        <item>@string/action_launch_app</item>
+        <item>@string/action_auto_rotate</item>
+    </string-array>
+
+    <string-array name="assist_key_action_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+        <item>8</item>
+        <item>9</item>
+        <item>10</item>
+        <item>11</item>
+        <item>12</item>
+        <item>13</item>
+    </string-array>
+</resources>

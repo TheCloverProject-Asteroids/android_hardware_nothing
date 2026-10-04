@@ -1,0 +1,11 @@
+type assist_key, domain, coredomain;
+typeattribute assist_key assist_key_visible_type;
+
+extra_system_uid_app_domain(assist_key)
+
+allow assist_key cameraserver_service:service_manager find;
+allow assist_key notification_service:service_manager find;
+allow assist_key power_service:service_manager find;
+allow assist_key vibrator_service:service_manager find;
+allow assist_key system_api_service:service_manager find;
+allow assist_key app_api_service:service_manager find;

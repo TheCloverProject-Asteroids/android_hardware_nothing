@@ -1,0 +1,46 @@
+//
+// Copyright (C) 2024 The LineageOS Project
+// SPDX-License-Identifier: Apache-2.0
+//
+
+android_app {
+    name: "AssistKey",
+
+    defaults: [
+        "SettingsLibDefaults",
+    ],
+
+    srcs: [
+        "src/**/*.kt",
+        "src/**/*.java",
+    ],
+    resource_dirs: ["res"],
+
+    certificate: "platform",
+    platform_apis: true,
+    system_ext_specific: true,
+    privileged: true,
+    min_sdk_version: "current",
+
+    static_libs: [
+        "androidx.core_core",
+        "androidx.preference_preference",
+        "com.google.android.material_material",
+    ],
+
+    required: [
+        "privapp_whitelist_com.nothing.assistkey",
+    ],
+
+    optimize: {
+        proguard_flags_files: ["proguard.flags"],
+    },
+}
+
+prebuilt_etc {
+    name: "privapp_whitelist_com.nothing.assistkey",
+    sub_dir: "permissions",
+    src: "privapp-permissions-com.nothing.assistkey.xml",
+    filename_from_src: true,
+    system_ext_specific: true,
+}
