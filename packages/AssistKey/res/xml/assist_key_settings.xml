@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2024 The LineageOS Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <SwitchPreferenceCompat
+        android:key="assist_key_enabled"
+        android:title="@string/assist_key_enable_title"
+        android:summary="@string/assist_key_enable_summary"
+        android:defaultValue="true" />
+
+    <PreferenceCategory
+        android:title="@string/category_actions_title"
+        app:dependency="assist_key_enabled">
+
+        <ListPreference
+            android:key="assist_key_single_press_action"
+            android:title="@string/single_press_title"
+            android:entries="@array/assist_key_action_entries"
+            android:entryValues="@array/assist_key_action_values"
+            android:defaultValue="1"
+            app:useSimpleSummaryProvider="true" />
+
+        <Preference
+            android:key="assist_key_custom_app_single"
+            android:title="@string/custom_app_single_title"
+            android:icon="@drawable/ic_apps" />
+
+        <ListPreference
+            android:key="assist_key_double_press_action"
+            android:title="@string/double_press_title"
+            android:entries="@array/assist_key_action_entries"
+            android:entryValues="@array/assist_key_action_values"
+            android:defaultValue="3"
+            app:useSimpleSummaryProvider="true" />
+
+        <Preference
+            android:key="assist_key_custom_app_double"
+            android:title="@string/custom_app_double_title"
+            android:icon="@drawable/ic_apps" />
+
+        <ListPreference
+            android:key="assist_key_long_press_action"
+            android:title="@string/long_press_title"
+            android:entries="@array/assist_key_action_entries"
+            android:entryValues="@array/assist_key_action_values"
+            android:defaultValue="2"
+            app:useSimpleSummaryProvider="true" />
+
+        <Preference
+            android:key="assist_key_custom_app_long"
+            android:title="@string/custom_app_long_title"
+            android:icon="@drawable/ic_apps" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/category_mistouch_title"
+        app:dependency="assist_key_enabled">
+
+        <SwitchPreferenceCompat
+            android:key="assist_key_mistouch_prevention"
+            android:title="@string/mistouch_prevention_title"
+            android:summary="@string/mistouch_prevention_summary"
+            android:defaultValue="true" />
+
+        <SwitchPreferenceCompat
+            android:key="assist_key_screen_off_allowed"
+            android:title="@string/screen_off_allowed_title"
+            android:summary="@string/screen_off_allowed_summary"
+            android:defaultValue="true" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/category_feedback_title"
+        app:dependency="assist_key_enabled">
+
+        <SwitchPreferenceCompat
+            android:key="assist_key_haptic_feedback"
+            android:title="@string/haptic_feedback_title"
+            android:summary="@string/haptic_feedback_summary"
+            android:defaultValue="true" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>
