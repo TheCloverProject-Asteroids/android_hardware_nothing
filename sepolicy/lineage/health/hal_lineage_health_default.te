@@ -1,9 +1,0 @@
-type hal_lineage_health_default, domain;
-type hal_lineage_health_default_exec, exec_type, vendor_file_type, file_type;
-init_daemon_domain(hal_lineage_health_default)
-
-r_dir_file(hal_lineage_health_default, vendor_sysfs_battery_supply)
-rw_dir_file(hal_lineage_health_default, vendor_proc_power_supply)
-
-allow hal_lineage_health_default vendor_sysfs_battery_supply:file rw_file_perms;
-allow hal_lineage_health_default vendor_sysfs_battery_supply:dir search;
