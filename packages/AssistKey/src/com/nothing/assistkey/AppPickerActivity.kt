@@ -7,6 +7,7 @@ package com.nothing.assistkey
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.provider.Settings
@@ -46,6 +47,8 @@ class AppPickerActivity : CollapsingToolbarBaseActivity() {
         listView = ListView(this).apply {
             divider = null
             dividerHeight = 0
+            clipToPadding = false
+            setPadding(0, 8, 0, 16)
         }
 
         val contentFrame = findViewById<ViewGroup>(com.android.settingslib.collapsingtoolbar.R.id.content_frame)
@@ -64,12 +67,10 @@ class AppPickerActivity : CollapsingToolbarBaseActivity() {
             val mainIntent = Intent(Intent.ACTION_MAIN, null).apply {
                 addCategory(Intent.CATEGORY_LAUNCHER)
             }
-            val resolveInfos = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                pm.queryIntentActivities(mainIntent, android.content.pm.PackageManager.ResolveInfoFlags.of(0))
-            } else {
-                @Suppress("DEPRECATION")
-                pm.queryIntentActivities(mainIntent, 0)
-            }
+            val resolveInfos = pm.queryIntentActivities(
+                mainIntent,
+                PackageManager.ResolveInfoFlags.of(0)
+            )
             val items = resolveInfos.map {
                 AppItem(
                     label = it.loadLabel(pm).toString(),
@@ -92,8 +93,9 @@ class AppPickerActivity : CollapsingToolbarBaseActivity() {
 
     private fun onAppSelected(packageName: String) {
         prefKey?.let { key ->
-            val sp = getSharedPreferences(Constants.SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE)
-            sp.edit().putString(key, packageName).apply()
+            val dpContext = if (isDeviceProtectedStorage) this else createDeviceProtectedStorageContext()
+            val sp = dpContext.getSharedPreferences(Constants.SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE)
+            sp.edit().putString(key, packageName).commit()
             try {
                 Settings.System.putString(contentResolver, key, packageName)
             } catch (_: Exception) {}

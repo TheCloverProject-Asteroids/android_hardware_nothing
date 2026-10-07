@@ -20,6 +20,11 @@
     <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.MODIFY_PHONE_STATE" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.INJECT_EVENTS" />
+    <uses-permission android:name="android.permission.REAL_GET_TASKS" />
 
     <queries>
         <intent>
@@ -54,7 +59,8 @@
             android:name=".SettingsActivity"
             android:label="@string/assist_key_title"
             android:configChanges="orientation|screenSize"
-            android:exported="true">
+            android:exported="true"
+            android:theme="@style/Theme.SubSettingsBase.Expressive">
             <intent-filter>
                 <action android:name="com.android.settings.action.IA_SETTINGS" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -95,7 +101,8 @@
             android:name=".AppPickerActivity"
             android:label="@string/select_app_title"
             android:exported="false"
-            android:configChanges="orientation|screenSize" />
+            android:configChanges="orientation|screenSize"
+            android:theme="@style/Theme.SubSettingsBase.Expressive" />
 
         <!-- Quick Settings Tile -->
         <service
@@ -110,20 +117,6 @@
             <meta-data
                 android:name="android.service.quicksettings.TOGGLEABLE_TILE"
                 android:value="true" />
-        </service>
-
-        <!-- Accessibility Service (fallback for ROMs without DeviceKeyHandler) -->
-        <service
-            android:name=".AssistKeyAccessibilityService"
-            android:label="@string/assist_key_title"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.accessibilityservice.AccessibilityService" />
-            </intent-filter>
-            <meta-data
-                android:name="android.accessibilityservice"
-                android:resource="@xml/assist_key_accessibility_service" />
         </service>
 
         <!-- Boot Completed Receiver -->

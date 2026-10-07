@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-     Copyright (C) 2024 The LineageOS Project
+     Copyright (C) 2024-2026 The LineageOS Project
      SPDX-License-Identifier: Apache-2.0
 -->
 <PreferenceScreen
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <SwitchPreferenceCompat
+    <com.android.settingslib.widget.MainSwitchPreference
         android:key="assist_key_enabled"
         android:title="@string/assist_key_enable_title"
-        android:summary="@string/assist_key_enable_summary"
         android:defaultValue="true" />
 
     <PreferenceCategory
-        android:title="@string/category_actions_title"
-        app:dependency="assist_key_enabled">
+        android:key="category_actions"
+        android:title="@string/category_actions_title">
 
         <ListPreference
             android:key="assist_key_single_press_action"
             android:title="@string/single_press_title"
+            android:icon="@drawable/ic_assist_key"
             android:entries="@array/assist_key_action_entries"
             android:entryValues="@array/assist_key_action_values"
             android:defaultValue="1"
@@ -33,6 +33,7 @@
         <ListPreference
             android:key="assist_key_double_press_action"
             android:title="@string/double_press_title"
+            android:icon="@drawable/ic_assist_key"
             android:entries="@array/assist_key_action_entries"
             android:entryValues="@array/assist_key_action_values"
             android:defaultValue="3"
@@ -46,6 +47,7 @@
         <ListPreference
             android:key="assist_key_long_press_action"
             android:title="@string/long_press_title"
+            android:icon="@drawable/ic_assist_key"
             android:entries="@array/assist_key_action_entries"
             android:entryValues="@array/assist_key_action_values"
             android:defaultValue="2"
@@ -59,31 +61,54 @@
     </PreferenceCategory>
 
     <PreferenceCategory
-        android:title="@string/category_mistouch_title"
-        app:dependency="assist_key_enabled">
+        android:key="category_smart_context"
+        android:title="@string/category_smart_context_title">
+
+        <SwitchPreferenceCompat
+            android:key="assist_key_smart_call_silence"
+            android:title="@string/smart_call_silence_title"
+            android:summary="@string/smart_call_silence_summary"
+            android:icon="@drawable/ic_volume"
+            android:defaultValue="true" />
+
+        <SwitchPreferenceCompat
+            android:key="assist_key_smart_camera_shutter"
+            android:title="@string/smart_camera_shutter_title"
+            android:summary="@string/smart_camera_shutter_summary"
+            android:icon="@drawable/ic_camera"
+            android:defaultValue="true" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="category_mistouch"
+        android:title="@string/category_mistouch_title">
 
         <SwitchPreferenceCompat
             android:key="assist_key_mistouch_prevention"
             android:title="@string/mistouch_prevention_title"
             android:summary="@string/mistouch_prevention_summary"
+            android:icon="@drawable/ic_lock"
             android:defaultValue="true" />
 
         <SwitchPreferenceCompat
             android:key="assist_key_screen_off_allowed"
             android:title="@string/screen_off_allowed_title"
             android:summary="@string/screen_off_allowed_summary"
+            android:icon="@drawable/ic_flashlight"
             android:defaultValue="true" />
 
     </PreferenceCategory>
 
     <PreferenceCategory
-        android:title="@string/category_feedback_title"
-        app:dependency="assist_key_enabled">
+        android:key="category_feedback"
+        android:title="@string/category_feedback_title">
 
         <SwitchPreferenceCompat
             android:key="assist_key_haptic_feedback"
             android:title="@string/haptic_feedback_title"
             android:summary="@string/haptic_feedback_summary"
+            android:icon="@drawable/ic_assist_key"
             android:defaultValue="true" />
 
     </PreferenceCategory>

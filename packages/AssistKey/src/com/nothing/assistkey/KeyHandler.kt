@@ -5,16 +5,24 @@
 
 package com.nothing.assistkey
 
+import android.app.ActivityManager
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.media.AudioManager
 import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
+import android.os.SystemClock
+import android.os.VibrationEffect
+import android.provider.MediaStore
 import android.provider.Settings
+import android.telecom.TelecomManager
 import android.util.Log
 import android.view.KeyEvent
 import com.android.internal.os.DeviceKeyHandler
@@ -23,9 +31,88 @@ class KeyHandler(private val context: Context) : DeviceKeyHandler {
     private val actionExecutor = ActionExecutor(context)
     private val powerManager = context.getSystemService(PowerManager::class.java)
     private val sensorManager = context.getSystemService(SensorManager::class.java)
+    private val audioManager = context.getSystemService(AudioManager::class.java)
+    private val telecomManager = context.getSystemService(TelecomManager::class.java)
+    private val activityManager = context.getSystemService(ActivityManager::class.java)
     private val proximitySensor = sensorManager?.getDefaultSensor(Sensor.TYPE_PROXIMITY)
 
     private val mainHandler = Handler(Looper.getMainLooper())
+
+    private var isCameraShutterIntercepted = false
+    private var isCallSilenceIntercepted = false
+
+    private fun isRinging(): Boolean {
+        return try {
+            if (audioManager?.mode == AudioManager.MODE_RINGTONE) {
+                return true
+            }
+            telecomManager?.isRinging == true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun silenceRinger() {
+        try {
+            actionExecutor.vibrate(VibrationEffect.EFFECT_TICK)
+            telecomManager?.silenceRinger()
+        } catch (e: Exception) {
+            Log.w(Constants.TAG, "Failed to silence ringer", e)
+        }
+    }
+
+    private var cachedCameraPackages: Set<String>? = null
+    private var lastCameraPackagesQueryTime: Long = 0L
+
+    private fun isCameraInForeground(): Boolean {
+        return try {
+            val tasks = activityManager?.getRunningTasks(1)
+            if (!tasks.isNullOrEmpty()) {
+                val component = tasks[0].topActivity ?: return false
+                val pkg = component.packageName.lowercase()
+                val cls = component.className.lowercase()
+
+                // Fast path: standard cameras and popular GCam port package signatures
+                if (pkg.contains("camera") || cls.contains("camera") ||
+                    pkg.contains("aperture") || pkg.contains("snapcam") ||
+                    pkg.contains("mgc") || pkg.contains("gcam") ||
+                    pkg.contains("scan3d") || pkg.contains("ruler") ||
+                    pkg.contains("aweme") || pkg.contains("opencamera")) {
+                    return true
+                }
+
+                // Dynamic fallback: verify if package handles camera capture intents
+                val now = SystemClock.uptimeMillis()
+                var cached = cachedCameraPackages
+                if (cached == null || (now - lastCameraPackagesQueryTime) > 60_000L) {
+                    val set = mutableSetOf<String>()
+                    val pm = context.packageManager
+                    val intents = listOf(
+                        Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA),
+                        Intent(MediaStore.ACTION_IMAGE_CAPTURE),
+                        Intent(MediaStore.ACTION_VIDEO_CAPTURE)
+                    )
+                    for (intent in intents) {
+                        val resolveList = pm.queryIntentActivities(
+                            intent,
+                            PackageManager.ResolveInfoFlags.of(0L)
+                        )
+                        for (info in resolveList) {
+                            set.add(info.activityInfo.packageName.lowercase())
+                        }
+                    }
+                    cachedCameraPackages = set
+                    lastCameraPackagesQueryTime = now
+                    cached = set
+                }
+                cached.contains(pkg)
+            } else {
+                false
+            }
+        } catch (_: Exception) {
+            false
+        }
+    }
 
     private val packageContext: Context = try {
         val pkgCtx = context.createPackageContext("com.nothing.assistkey", Context.CONTEXT_IGNORE_SECURITY)
@@ -53,7 +140,13 @@ class KeyHandler(private val context: Context) : DeviceKeyHandler {
         return try {
             Settings.System.getInt(context.contentResolver, key) == 1
         } catch (_: Settings.SettingNotFoundException) {
-            sharedPreferences.getBoolean(key, default)
+            val all = sharedPreferences.all
+            when (val v = all[key]) {
+                is Boolean -> v
+                is Int -> v == 1
+                is String -> v == "true" || v == "1"
+                else -> default
+            }
         } catch (_: Exception) {
             default
         }
@@ -63,8 +156,13 @@ class KeyHandler(private val context: Context) : DeviceKeyHandler {
         return try {
             Settings.System.getInt(context.contentResolver, key)
         } catch (_: Settings.SettingNotFoundException) {
-            sharedPreferences.getString(key, default.toString())?.toIntOrNull()
-                ?: sharedPreferences.getInt(key, default)
+            val all = sharedPreferences.all
+            when (val v = all[key]) {
+                is Int -> v
+                is String -> v.toIntOrNull() ?: default
+                is Number -> v.toInt()
+                else -> default
+            }
         } catch (_: Exception) {
             default
         }
@@ -72,9 +170,18 @@ class KeyHandler(private val context: Context) : DeviceKeyHandler {
 
     private fun getPrefString(key: String, default: String? = null): String? {
         return try {
-            Settings.System.getString(context.contentResolver, key) ?: sharedPreferences.getString(key, default)
+            Settings.System.getString(context.contentResolver, key)
+                ?: when (val v = sharedPreferences.all[key]) {
+                    is String -> v
+                    null -> default
+                    else -> v.toString()
+                }
         } catch (_: Exception) {
-            sharedPreferences.getString(key, default)
+            when (val v = sharedPreferences.all[key]) {
+                is String -> v
+                null -> default
+                else -> v.toString()
+            }
         }
     }
 
@@ -88,26 +195,59 @@ class KeyHandler(private val context: Context) : DeviceKeyHandler {
             return event
         }
 
+        Log.d(Constants.TAG, "KeyHandler intercepted key: action=${event.action}, keyCode=${event.keyCode}, scanCode=${event.scanCode}")
+
         val isInteractive = powerManager?.isInteractive == true
-        val allowScreenOff = getPrefBoolean(Constants.PREF_SCREEN_OFF_ALLOWED, true)
-        if (!isInteractive && !allowScreenOff) {
-            return null
-        }
 
-        val mistouchPrevention = getPrefBoolean(Constants.PREF_MISTOUCH_PREVENTION, true)
-
-        when (event.action) {
-            KeyEvent.ACTION_DOWN -> {
-                if (event.repeatCount == 0) {
-                    if (!isInteractive && mistouchPrevention) {
-                        startProximityCheck()
-                    }
-                    onKeyDown()
+        if (event.action == KeyEvent.ACTION_DOWN) {
+            if (event.repeatCount == 0) {
+                // Smart context: Silence ringer if an incoming call is ringing
+                if (getPrefBoolean(Constants.PREF_SMART_CALL_SILENCE, true) && isRinging()) {
+                    isCallSilenceIntercepted = true
+                    return null
                 }
+
+                // Smart context: Camera shutter button when Camera app is in foreground
+                if (isInteractive && getPrefBoolean(Constants.PREF_SMART_CAMERA_SHUTTER, true) && isCameraInForeground()) {
+                    isCameraShutterIntercepted = true
+                    actionExecutor.vibrate(VibrationEffect.EFFECT_CLICK)
+                    actionExecutor.sendCameraKeyEvent(KeyEvent.ACTION_DOWN, 0)
+                    return null
+                }
+
+                val allowScreenOff = getPrefBoolean(Constants.PREF_SCREEN_OFF_ALLOWED, true)
+                if (!isInteractive && !allowScreenOff) {
+                    return null
+                }
+
+                val mistouchPrevention = getPrefBoolean(Constants.PREF_MISTOUCH_PREVENTION, true)
+                if (!isInteractive && mistouchPrevention) {
+                    startProximityCheck()
+                }
+                onKeyDown()
+            } else if (isCameraShutterIntercepted) {
+                actionExecutor.sendCameraKeyEvent(KeyEvent.ACTION_DOWN, event.repeatCount)
+                return null
             }
-            KeyEvent.ACTION_UP -> {
-                onKeyUp()
+        } else if (event.action == KeyEvent.ACTION_UP) {
+            if (isCallSilenceIntercepted) {
+                isCallSilenceIntercepted = false
+                silenceRinger()
+                return null
             }
+
+            if (isCameraShutterIntercepted) {
+                isCameraShutterIntercepted = false
+                actionExecutor.sendCameraKeyEvent(KeyEvent.ACTION_UP, 0)
+                return null
+            }
+
+            val allowScreenOff = getPrefBoolean(Constants.PREF_SCREEN_OFF_ALLOWED, true)
+            if (!isInteractive && !allowScreenOff) {
+                return null
+            }
+
+            onKeyUp()
         }
 
         // Consume the key event so OS doesn't launch default assistant
@@ -115,18 +255,9 @@ class KeyHandler(private val context: Context) : DeviceKeyHandler {
     }
 
     private fun isEssentialKey(event: KeyEvent): Boolean {
-        if (event.scanCode == Constants.SCANCODE_ESSENTIAL_KEY) {
-            return true
-        }
-
-        if (event.keyCode == Constants.KEYCODE_ESSENTIAL_KEY) {
-            val dev = event.device
-            if (dev != null && dev.name.contains(Constants.DEVICE_NAME_GPIO)) {
-                return true
-            }
-        }
-
-        return false
+        return event.keyCode == Constants.KEYCODE_ESSENTIAL_KEY ||
+               event.keyCode == Constants.KEYCODE_ESSENTIAL_KEY_BUTTON1 ||
+               event.scanCode == Constants.SCANCODE_ESSENTIAL_KEY
     }
 
     private fun startProximityCheck() {
@@ -217,7 +348,8 @@ class KeyHandler(private val context: Context) : DeviceKeyHandler {
                     mainHandler.removeCallbacks(it)
                     pendingSinglePressRunnable = null
                 }
-                actionExecutor.execute(longPressAction, customApp)
+                Log.d(Constants.TAG, "KeyHandler executing long press action: $longPressAction, app: $customApp")
+                actionExecutor.execute(longPressAction, customApp, VibrationEffect.EFFECT_HEAVY_CLICK)
             }
             longPressRunnable = runnable
             mainHandler.postDelayed(runnable, Constants.DEFAULT_LONG_PRESS_TIMEOUT_MS)
@@ -251,7 +383,8 @@ class KeyHandler(private val context: Context) : DeviceKeyHandler {
                 mainHandler.removeCallbacks(pendingSinglePressRunnable!!)
                 pendingSinglePressRunnable = null
                 val customApp = getPrefString(Constants.PREF_CUSTOM_APP_DOUBLE)
-                actionExecutor.execute(doublePressAction, customApp)
+                Log.d(Constants.TAG, "KeyHandler executing double press action: $doublePressAction, app: $customApp")
+                actionExecutor.execute(doublePressAction, customApp, VibrationEffect.EFFECT_DOUBLE_CLICK)
             } else {
                 // First click -> schedule single press
                 val singlePressAction = getPrefInt(
@@ -263,7 +396,8 @@ class KeyHandler(private val context: Context) : DeviceKeyHandler {
                 val runnable = Runnable {
                     if (isPocketNear) return@Runnable
                     pendingSinglePressRunnable = null
-                    actionExecutor.execute(singlePressAction, customApp)
+                    Log.d(Constants.TAG, "KeyHandler executing single press action: $singlePressAction, app: $customApp")
+                    actionExecutor.execute(singlePressAction, customApp, VibrationEffect.EFFECT_CLICK)
                 }
                 pendingSinglePressRunnable = runnable
                 mainHandler.postDelayed(runnable, Constants.DEFAULT_DOUBLE_PRESS_TIMEOUT_MS)
@@ -275,7 +409,8 @@ class KeyHandler(private val context: Context) : DeviceKeyHandler {
                 Constants.ACTION_VOICE_ASSISTANT
             )
             val customApp = getPrefString(Constants.PREF_CUSTOM_APP_SINGLE)
-            actionExecutor.execute(singlePressAction, customApp)
+            Log.d(Constants.TAG, "KeyHandler executing immediate single press action: $singlePressAction, app: $customApp")
+            actionExecutor.execute(singlePressAction, customApp, VibrationEffect.EFFECT_CLICK)
         }
     }
 }

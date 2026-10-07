@@ -1,5 +1,10 @@
 -keep class com.nothing.assistkey.KeyHandler {
     public <init>(android.content.Context);
+    public android.view.KeyEvent handleKeyEvent(android.view.KeyEvent);
+    *;
+}
+
+-keep interface com.android.internal.os.DeviceKeyHandler {
     *;
 }
 

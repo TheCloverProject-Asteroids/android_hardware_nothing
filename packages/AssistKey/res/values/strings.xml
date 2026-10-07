@@ -32,9 +32,22 @@
     <string name="action_media_play_pause">Media: Play / Pause</string>
     <string name="action_media_next">Media: Next Track</string>
     <string name="action_media_prev">Media: Previous Track</string>
-    <string name="action_screen_off">Turn Off Screen</string>
     <string name="action_launch_app">Launch Application</string>
     <string name="action_auto_rotate">Toggle Auto-Rotate</string>
+    <string name="action_mute_mic">Mute / Unmute Microphone</string>
+    <string name="action_lockdown">Lockdown</string>
+    <string name="action_wallet">Open Wallet</string>
+    <string name="action_camera_shutter">Camera Shutter</string>
+
+    <string name="mic_muted">Microphone muted</string>
+    <string name="mic_unmuted">Microphone unmuted</string>
+
+    <!-- Context-Aware Actions -->
+    <string name="category_smart_context_title">Context-Aware Actions</string>
+    <string name="smart_call_silence_title">Silence incoming calls</string>
+    <string name="smart_call_silence_summary">Pressing Assist Key during an incoming call silences the ringer</string>
+    <string name="smart_camera_shutter_title">Camera shutter button</string>
+    <string name="smart_camera_shutter_summary">Pressing Assist Key inside Camera app snaps photo or captures video</string>
 
     <!-- App Picker -->
     <string name="custom_app_single_title">App for single press</string>
@@ -53,8 +66,7 @@
     <string name="haptic_feedback_title">Vibrate on press</string>
     <string name="haptic_feedback_summary">Provide haptic feedback when an action is triggered</string>
 
-    <!-- Tile & Accessibility -->
+    <!-- Quick Settings Tile -->
     <string name="status_enabled">Enabled</string>
     <string name="status_disabled">Disabled</string>
-    <string name="accessibility_service_description">Enables capturing Assist Key hardware presses on AOSP-based custom ROMs.</string>
 </resources>

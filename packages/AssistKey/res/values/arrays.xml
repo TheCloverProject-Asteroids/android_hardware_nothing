@@ -16,9 +16,12 @@
         <item>@string/action_media_play_pause</item>
         <item>@string/action_media_next</item>
         <item>@string/action_media_prev</item>
-        <item>@string/action_screen_off</item>
         <item>@string/action_launch_app</item>
         <item>@string/action_auto_rotate</item>
+        <item>@string/action_mute_mic</item>
+        <item>@string/action_lockdown</item>
+        <item>@string/action_wallet</item>
+        <item>@string/action_camera_shutter</item>
     </string-array>
 
     <string-array name="assist_key_action_values">
@@ -33,8 +36,11 @@
         <item>8</item>
         <item>9</item>
         <item>10</item>
-        <item>11</item>
         <item>12</item>
         <item>13</item>
+        <item>15</item>
+        <item>16</item>
+        <item>17</item>
+        <item>18</item>
     </string-array>
 </resources>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 The LineageOS Project
+ * Copyright (C) 2024-2026 The LineageOS Project
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -12,15 +12,21 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
+import android.widget.CompoundButton
 import androidx.preference.ListPreference
 import androidx.preference.Preference
-import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.PreferenceCategory
 import androidx.preference.SwitchPreferenceCompat
+import com.android.settingslib.widget.MainSwitchPreference
+import com.android.settingslib.widget.SettingsBasePreferenceFragment
 
-class SettingsFragment : PreferenceFragmentCompat(), Preference.OnPreferenceChangeListener {
+class SettingsFragment : SettingsBasePreferenceFragment(),
+    Preference.OnPreferenceChangeListener,
+    CompoundButton.OnCheckedChangeListener {
+
     private val mainHandler = Handler(Looper.getMainLooper())
 
-    private lateinit var enabledPref: SwitchPreferenceCompat
+    private lateinit var enabledPref: MainSwitchPreference
     private lateinit var singlePressPref: ListPreference
     private lateinit var doublePressPref: ListPreference
     private lateinit var longPressPref: ListPreference
@@ -29,12 +35,20 @@ class SettingsFragment : PreferenceFragmentCompat(), Preference.OnPreferenceChan
     private lateinit var doubleAppPref: Preference
     private lateinit var longAppPref: Preference
 
+    private var actionsCategory: PreferenceCategory? = null
+    private var smartContextCategory: PreferenceCategory? = null
+    private var mistouchCategory: PreferenceCategory? = null
+    private var feedbackCategory: PreferenceCategory? = null
+
     private var mistouchPref: SwitchPreferenceCompat? = null
     private var screenOffPref: SwitchPreferenceCompat? = null
     private var hapticPref: SwitchPreferenceCompat? = null
+    private var smartCallSilencePref: SwitchPreferenceCompat? = null
+    private var smartCameraShutterPref: SwitchPreferenceCompat? = null
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         preferenceManager.sharedPreferencesName = Constants.SHARED_PREFERENCES_NAME
+        preferenceManager.setStorageDeviceProtected()
         addPreferencesFromResource(R.xml.assist_key_settings)
 
         enabledPref = findPreference(Constants.PREF_KEY_ENABLED)!!
@@ -46,22 +60,35 @@ class SettingsFragment : PreferenceFragmentCompat(), Preference.OnPreferenceChan
         doubleAppPref = findPreference(Constants.PREF_CUSTOM_APP_DOUBLE)!!
         longAppPref = findPreference(Constants.PREF_CUSTOM_APP_LONG)!!
 
+        actionsCategory = findPreference("category_actions")
+        smartContextCategory = findPreference("category_smart_context")
+        mistouchCategory = findPreference("category_mistouch")
+        feedbackCategory = findPreference("category_feedback")
+
         mistouchPref = findPreference(Constants.PREF_MISTOUCH_PREVENTION)
         screenOffPref = findPreference(Constants.PREF_SCREEN_OFF_ALLOWED)
         hapticPref = findPreference(Constants.PREF_HAPTIC_FEEDBACK)
+        smartCallSilencePref = findPreference(Constants.PREF_SMART_CALL_SILENCE)
+        smartCameraShutterPref = findPreference(Constants.PREF_SMART_CAMERA_SHUTTER)
 
-        enabledPref.onPreferenceChangeListener = this
+        val isEnabled = preferenceManager.sharedPreferences?.getBoolean(Constants.PREF_KEY_ENABLED, true) ?: true
+        enabledPref.isChecked = isEnabled
+        enabledPref.addOnSwitchChangeListener(this)
+
         singlePressPref.onPreferenceChangeListener = this
         doublePressPref.onPreferenceChangeListener = this
         longPressPref.onPreferenceChangeListener = this
         mistouchPref?.onPreferenceChangeListener = this
         screenOffPref?.onPreferenceChangeListener = this
         hapticPref?.onPreferenceChangeListener = this
+        smartCallSilencePref?.onPreferenceChangeListener = this
+        smartCameraShutterPref?.onPreferenceChangeListener = this
 
         setupAppPickerPreference(singleAppPref, Constants.PREF_CUSTOM_APP_SINGLE)
         setupAppPickerPreference(doubleAppPref, Constants.PREF_CUSTOM_APP_DOUBLE)
         setupAppPickerPreference(longAppPref, Constants.PREF_CUSTOM_APP_LONG)
 
+        updateEnabledState(isEnabled)
         updateAppPreferencesVisibility()
         updateAppSummaries()
 
@@ -72,6 +99,19 @@ class SettingsFragment : PreferenceFragmentCompat(), Preference.OnPreferenceChan
     override fun onResume() {
         super.onResume()
         updateAppSummaries()
+    }
+
+    override fun onCheckedChanged(buttonView: CompoundButton, isChecked: Boolean) {
+        preferenceManager.sharedPreferences?.edit()?.putBoolean(Constants.PREF_KEY_ENABLED, isChecked)?.apply()
+        syncPrefToSettings(Constants.PREF_KEY_ENABLED, isChecked)
+        updateEnabledState(isChecked)
+    }
+
+    private fun updateEnabledState(isEnabled: Boolean) {
+        actionsCategory?.isEnabled = isEnabled
+        smartContextCategory?.isEnabled = isEnabled
+        mistouchCategory?.isEnabled = isEnabled
+        feedbackCategory?.isEnabled = isEnabled
     }
 
     override fun onPreferenceChange(preference: Preference, newValue: Any?): Boolean {
@@ -116,21 +156,30 @@ class SettingsFragment : PreferenceFragmentCompat(), Preference.OnPreferenceChan
         fun getAppLabel(pkg: String?): String {
             if (pkg.isNullOrBlank()) return getString(R.string.no_app_selected)
             return try {
-                val appInfo = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                    pm.getApplicationInfo(pkg, PackageManager.ApplicationInfoFlags.of(0))
-                } else {
-                    @Suppress("DEPRECATION")
-                    pm.getApplicationInfo(pkg, 0)
-                }
+                val appInfo = pm.getApplicationInfo(pkg, PackageManager.ApplicationInfoFlags.of(0L))
                 pm.getApplicationLabel(appInfo).toString()
             } catch (_: PackageManager.NameNotFoundException) {
                 getString(R.string.no_app_selected)
             }
         }
 
-        singleAppPref.summary = getAppLabel(sp.getString(Constants.PREF_CUSTOM_APP_SINGLE, null))
-        doubleAppPref.summary = getAppLabel(sp.getString(Constants.PREF_CUSTOM_APP_DOUBLE, null))
-        longAppPref.summary = getAppLabel(sp.getString(Constants.PREF_CUSTOM_APP_LONG, null))
+        val all = sp.all
+        val singlePkg = when (val v = all[Constants.PREF_CUSTOM_APP_SINGLE]) {
+            is String -> v
+            else -> null
+        }
+        val doublePkg = when (val v = all[Constants.PREF_CUSTOM_APP_DOUBLE]) {
+            is String -> v
+            else -> null
+        }
+        val longPkg = when (val v = all[Constants.PREF_CUSTOM_APP_LONG]) {
+            is String -> v
+            else -> null
+        }
+
+        singleAppPref.summary = getAppLabel(singlePkg)
+        doubleAppPref.summary = getAppLabel(doublePkg)
+        longAppPref.summary = getAppLabel(longPkg)
     }
 
     private fun syncPrefToSettings(key: String, value: Any?) {
@@ -189,6 +238,14 @@ class SettingsFragment : PreferenceFragmentCompat(), Preference.OnPreferenceChan
         syncPrefToSettings(
             Constants.PREF_HAPTIC_FEEDBACK,
             sp.getBoolean(Constants.PREF_HAPTIC_FEEDBACK, true)
+        )
+        syncPrefToSettings(
+            Constants.PREF_SMART_CALL_SILENCE,
+            sp.getBoolean(Constants.PREF_SMART_CALL_SILENCE, true)
+        )
+        syncPrefToSettings(
+            Constants.PREF_SMART_CAMERA_SHUTTER,
+            sp.getBoolean(Constants.PREF_SMART_CAMERA_SHUTTER, true)
         )
     }
 }
