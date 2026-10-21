@@ -362,9 +362,9 @@ public final class SettingsManager {
 
     public static boolean isGlyphNotifsAppEssential(String app) {
         Context ctx = getContext();
-        Set<String> selectedValues = PreferenceManager.getDefaultSharedPreferences(ctx)
-                .getStringSet(Constants.GLYPH_NOTIFS_SUB_ESSENTIAL , new HashSet<String>());
-        return selectedValues.contains(app) && isGlyphNotifsEnabled();
+        return ctx.getSharedPreferences(Constants.GLYPH_NOTIF_APP_PREF_PREFIX + app,
+                        Context.MODE_PRIVATE)
+                .getBoolean(Constants.GLYPH_NOTIFS_SUB_ESSENTIAL, false);
     }
 
     public static boolean isGlyphAutoBrightnessEnabled() {

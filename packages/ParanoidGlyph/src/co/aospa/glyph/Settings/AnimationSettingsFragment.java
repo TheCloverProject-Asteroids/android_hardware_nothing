@@ -100,9 +100,6 @@ public class AnimationSettingsFragment
 
     private SwitchPreferenceCompat mToneSyncSwitch;
 
-    private List<String> mEssentialApps = new ArrayList<String>();
-    private List<String> mEssentialAppsNames = new ArrayList<String>();
-
     private List<String> userAnimationList = new ArrayList<>();
     private List<String> bundledAnimationList = new ArrayList<>();
 
@@ -110,7 +107,6 @@ public class AnimationSettingsFragment
     private Preference mLivePreviewPreference;
     private MediaPlayer mMediaPlayer;
     private boolean mIsPreviewPlaying = false;
-    private MultiSelectListPreference mMultiSelectListPreference;
     private SwitchPreferenceCompat mReverseAnimationSwitch;
     private PreferenceCategory appListCategory;
 
@@ -555,16 +551,9 @@ public class AnimationSettingsFragment
 
                     if (canNotify) {
                         addAppPreference(app.packageName);
-
-                        mEssentialApps.add(app.packageName);
-                        mEssentialAppsNames.add(app.loadLabel(mPackageManager).toString());
                     }
                 }
             }
-            mMultiSelectListPreference = findPreference(Constants.GLYPH_NOTIFS_SUB_ESSENTIAL);
-            mMultiSelectListPreference.setOnPreferenceChangeListener(this);
-            mMultiSelectListPreference.setEntries(mEssentialAppsNames.toArray(new CharSequence[0]));
-            mMultiSelectListPreference.setEntryValues(mEssentialApps.toArray(new CharSequence[0]));
         }
     }
 

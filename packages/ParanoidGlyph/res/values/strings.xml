@@ -111,7 +111,7 @@
     <string name="glyph_settings_notifs_sub_title">Apps to allow</string>
     <string name="glyph_settings_notifs_sub_toggle_title">Enable notification animation</string>
     <string name="glyph_settings_notifs_sub_animations_title">@string/glyph_settings_sub_animations_title</string>
-    <string name="glyph_settings_notifs_sub_essential_title">Essential Notifications</string>
+    <string name="glyph_settings_notifs_sub_essential_title">Essential Notification</string>
     <string name="glyph_settings_notifs_sub_essential_summary">Essential Glyph will be displayed until Essential notifications are read or dismissed</string>
 
     <string name="glyph_settings_notifs_additional_hint">New CSV animations can placed in /sdcard/Glyph/Notifications</string>

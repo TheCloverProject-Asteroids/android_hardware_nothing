@@ -204,7 +204,8 @@ public class NotificationService extends NotificationListenerService
             mThreadHandler.postDelayed(delayedTask, SYNC_DELAY);
         }
         
-        if (SettingsManager.isGlyphNotifsAppEssential(packageName)
+        if (SettingsManager.isGlyphNotifsEnabled(packageName) &&
+                SettingsManager.isGlyphNotifsAppEssential(packageName)
                         && !sbn.isOngoing()
                         && !ArrayUtils.contains(Constants.APPS_TO_IGNORE, packageName)
                         && !ArrayUtils.contains(Constants.NOTIFS_TO_IGNORE, packageName + ":" + packageChannelID)
