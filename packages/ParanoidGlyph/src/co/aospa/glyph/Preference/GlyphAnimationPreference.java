@@ -125,6 +125,11 @@ public class GlyphAnimationPreference extends Preference {
         super.onAttached();
         if (DEBUG) Log.d(TAG, "onAttached");
         startAnimation();
+        mActivity.runOnUiThread(() -> {
+            for (int i = 0; i < animationSlugs.length; i++) {
+                setGlyphsDrawable(animationImgs[i], 0);
+            }
+        });
     }
 
     @Override
@@ -197,6 +202,16 @@ public class GlyphAnimationPreference extends Preference {
         animationPaused = !play;
         animationReversed = reverse;
         animationThread.interrupt();
+    }
+
+    private void setGlyphsDrawable(ImageView imageView, int brightness) {
+        if (imageView == null) return;
+        if (brightness <= 0) {
+            imageView.setAlpha(0.3f);
+        } else {
+            float brightnessFactor = (float) (0.4 + 0.6 * (brightness / (double) Constants.getMaxBrightness()));
+            imageView.setAlpha(brightnessFactor);
+        }
     }
 
     Thread animationThread = new Thread() {
@@ -322,15 +337,6 @@ public class GlyphAnimationPreference extends Preference {
                 }
             }
         }
-        
-        private void setGlyphsDrawable(ImageView imageView, int brightness) {
-            if (imageView == null) return;
-            if (brightness <= 0) {
-                imageView.setAlpha(0.3f);
-            } else {
-                float brightnessFactor = (float) (0.4 + 0.6 * (brightness / (double) Constants.getMaxBrightness()));
-                imageView.setAlpha(brightnessFactor);
-            }
-        }
+
     };
 }
