@@ -50,6 +50,7 @@ import android.util.Log;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 
+import co.aospa.glyph.Data.ApplicationData;
 import co.aospa.glyph.Manager.AnimationManager;
 import co.aospa.glyph.Manager.StatusManager;
 import co.aospa.glyph.R;
@@ -61,7 +62,9 @@ import static co.aospa.glyph.Utils.InterfaceUtils.showDialog;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import co.aospa.glyph.Utils.FileUtils;
@@ -111,14 +114,6 @@ public class SettingsFragment extends SettingsBasePreferenceFragment implements 
 
     private Context context;
 
-    String[] mediaPermissions = {
-            Manifest.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK
-    };
-
-    String[] micPermissions = {
-            Manifest.permission.RECORD_AUDIO
-    };
-
     private BroadcastReceiver mScheduleUpdateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -127,6 +122,9 @@ public class SettingsFragment extends SettingsBasePreferenceFragment implements 
             }
         }
     };
+
+    private Map<String, ApplicationData> mediaData;
+    private Map<String, ApplicationData> micData;
 
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
@@ -250,10 +248,14 @@ public class SettingsFragment extends SettingsBasePreferenceFragment implements 
         mProgressMediaPreference.setOnPreferenceChangeListener(this);
 
         mProgressMediaWhitelistPreference = findPreference(Constants.GLYPH_PROGRESS_MEDIA_WHITELIST);
-        mProgressMediaWhitelistPreference.setEntries(
-                ResourceUtils.getApplicationsWithPermission(true, mediaPermissions));
+
+        mediaData = ApplicationData.getMediaApps(context.getApplicationContext());
+        mProgressMediaWhitelistPreference.setEntries(mediaData.values().stream()
+                .map(ApplicationData::label)
+                .toArray(CharSequence[]::new));
+
         mProgressMediaWhitelistPreference.setEntryValues(
-                ResourceUtils.getApplicationsWithPermission(false, mediaPermissions));
+                mediaData.keySet().toArray(CharSequence[]::new));
 
         mRedLedCategory = findPreference(Constants.GLYPH_RED_LED_CATEGORY);
         mRedLedCategory.setVisible(Constants.Device.isPhone2() || Constants.Device.isPhone1());
@@ -263,10 +265,13 @@ public class SettingsFragment extends SettingsBasePreferenceFragment implements 
         mMicActivityPreference.setEnabled(glyphEnabled);
 
         mMicActivityWhitelistPreference = findPreference(Constants.GLYPH_MIC_ACTIVITY_WHITELIST);
-        mMicActivityWhitelistPreference.setEntries(
-                ResourceUtils.getApplicationsWithPermission(true, micPermissions));
-        mMicActivityWhitelistPreference.setEntryValues(
-                ResourceUtils.getApplicationsWithPermission(false, micPermissions));
+
+        micData = ApplicationData.getMicApps(context.getApplicationContext());
+        mMicActivityWhitelistPreference.setEntries(micData.values().stream()
+                .map(ApplicationData::label)
+                .toArray(CharSequence[]::new));
+
+        mMicActivityWhitelistPreference.setEntryValues(micData.keySet().toArray(CharSequence[]::new));
         mMicActivityWhitelistPreference.setOnPreferenceChangeListener(this);
         mMicActivityWhitelistPreference.setEnabled(glyphEnabled);
 
