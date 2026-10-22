@@ -13,7 +13,9 @@ import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -104,35 +106,35 @@ public class Data {
 
         public static Map<String, ApplicationData> get(Context ctx) {
             if (appDataCache.isEmpty()) init(ctx);
-            return appDataCache;
+            return sortByLabel(appDataCache);
         }
 
         public static Map<String, ApplicationData> getMediaApps(Context ctx) {
             if (appDataCache.isEmpty()) init(ctx);
-            return appDataCache.entrySet().stream()
+            return sortByLabel(appDataCache.entrySet().stream()
                     .filter(e -> e.getValue().canBindMedia())
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
         }
 
         public static Map<String, ApplicationData> getMicApps(Context ctx) {
             if (appDataCache.isEmpty()) init(ctx);
-            return appDataCache.entrySet().stream()
+            return sortByLabel(appDataCache.entrySet().stream()
                     .filter(e -> e.getValue().canUseMic())
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
         }
 
         public static Map<String, ApplicationData> getCallApps(Context ctx) {
             if (appDataCache.isEmpty()) init(ctx);
-            return appDataCache.entrySet().stream()
+            return sortByLabel(appDataCache.entrySet().stream()
                     .filter(e -> e.getValue().canManageOwnCalls())
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
         }
 
         public static Map<String, ApplicationData> getNotificationApps(Context ctx) {
             if (appDataCache.isEmpty()) init(ctx);
-            return appDataCache.entrySet().stream()
+            return sortByLabel(appDataCache.entrySet().stream()
                     .filter(e -> e.getValue().canNotify())
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
         }
 
         public static ApplicationData getApplication(Context ctx, String pkg) {
@@ -142,6 +144,17 @@ public class Data {
 
         public static void remove(String pkg) {
             appDataCache.remove(pkg);
+        }
+
+        private static Map<String, ApplicationData> sortByLabel(Map<String, ApplicationData> apps) {
+            return apps.entrySet().stream()
+                    .sorted(Map.Entry.comparingByValue(
+                            Comparator.comparing(ApplicationData::label, String.CASE_INSENSITIVE_ORDER)))
+                    .collect(Collectors.toMap(
+                            Map.Entry::getKey,
+                            Map.Entry::getValue,
+                            (a, b) -> a,
+                            LinkedHashMap::new));
         }
 
         public static void fillPackageInfo(Context ctx, String pkg) throws PackageManager.NameNotFoundException {
