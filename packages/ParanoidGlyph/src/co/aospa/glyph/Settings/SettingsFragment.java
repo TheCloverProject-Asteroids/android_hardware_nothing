@@ -199,30 +199,36 @@ public class SettingsFragment extends SettingsBasePreferenceFragment implements 
         mCallPreference.setSwitchEnabled(glyphEnabled);
         mCallPreference.setOnPreferenceChangeListener(this);
 
+        boolean chargingSupported = !Constants.Device.isPhone2a();
         mChargingCategory = (PreferenceCategory) findPreference(Constants.GLYPH_CHARGING_CATEGORY);
-        mChargingLevelPreference = (SwitchPreferenceCompat)
-                findPreference(Constants.GLYPH_CHARGING_LEVEL_ENABLE);
+        mChargingCategory.setVisible(chargingSupported);
 
-        mChargingLevelPreference.setEnabled(glyphEnabled);
-        mChargingLevelPreference.setOnPreferenceChangeListener(this);
+        if (chargingSupported) {
+            mChargingLevelPreference = (SwitchPreferenceCompat)
+                    findPreference(Constants.GLYPH_CHARGING_LEVEL_ENABLE);
 
-        mChargingCategory.setVisible(!Constants.Device.isPhone2a());
+            mChargingLevelPreference.setEnabled(glyphEnabled);
+            mChargingLevelPreference.setOnPreferenceChangeListener(this);
 
-        mChargingPowersharePreference = (SwitchPreferenceCompat) findPreference(Constants.GLYPH_CHARGING_POWERSHARE_ENABLE);
+            mChargingPowersharePreference = (SwitchPreferenceCompat) findPreference(Constants.GLYPH_CHARGING_POWERSHARE_ENABLE);
 
-        if (Constants.isPowershareSupported()) {
-           mChargingPowersharePreference.setEnabled(glyphEnabled);
-           mChargingPowersharePreference.setOnPreferenceChangeListener(this);
-        } else {
-           mChargingPowersharePreference.setVisible(false);
+            if (Constants.isPowershareSupported()) {
+                mChargingPowersharePreference.setEnabled(glyphEnabled);
+                mChargingPowersharePreference.setOnPreferenceChangeListener(this);
+            } else {
+                mChargingPowersharePreference.setVisible(false);
+            }
         }
 
         mVolumeCategory = findPreference(Constants.GLYPH_VOLUME_CATEGORY);
-        mVolumeCategory.setVisible(!Constants.Device.isPhone1());
+        boolean volumeSupported = !Constants.Device.isPhone1();
+        mVolumeCategory.setVisible(volumeSupported);
 
-        mVolumeLevelPreference = (SwitchPreferenceCompat) findPreference(Constants.GLYPH_VOLUME_LEVEL_ENABLE);
-        mVolumeLevelPreference.setEnabled(glyphEnabled);
-        mVolumeLevelPreference.setOnPreferenceChangeListener(this);
+        if (volumeSupported) {
+            mVolumeLevelPreference = (SwitchPreferenceCompat) findPreference(Constants.GLYPH_VOLUME_LEVEL_ENABLE);
+            mVolumeLevelPreference.setEnabled(glyphEnabled);
+            mVolumeLevelPreference.setOnPreferenceChangeListener(this);
+        }
 
         mMusicVisualizerPreference = (SwitchPreferenceCompat) findPreference(Constants.GLYPH_MUSIC_VISUALIZER_ENABLE);
         mMusicVisualizerPreference.setEnabled(glyphEnabled);
@@ -257,27 +263,30 @@ public class SettingsFragment extends SettingsBasePreferenceFragment implements 
         mProgressMediaWhitelistPreference.setEntryValues(
                 mediaData.keySet().toArray(CharSequence[]::new));
 
+        boolean redLedSupported = (Constants.Device.isPhone2() || Constants.Device.isPhone1());
         mRedLedCategory = findPreference(Constants.GLYPH_RED_LED_CATEGORY);
-        mRedLedCategory.setVisible(Constants.Device.isPhone2() || Constants.Device.isPhone1());
+        mRedLedCategory.setVisible(redLedSupported);
 
-        mMicActivityPreference = findPreference(Constants.GLYPH_MIC_ACTIVITY_ENABLE);
-        mMicActivityPreference.setOnPreferenceChangeListener(this);
-        mMicActivityPreference.setEnabled(glyphEnabled);
+        if (redLedSupported) {
+            mMicActivityPreference = findPreference(Constants.GLYPH_MIC_ACTIVITY_ENABLE);
+            mMicActivityPreference.setOnPreferenceChangeListener(this);
+            mMicActivityPreference.setEnabled(glyphEnabled);
 
-        mMicActivityWhitelistPreference = findPreference(Constants.GLYPH_MIC_ACTIVITY_WHITELIST);
+            mMicActivityWhitelistPreference = findPreference(Constants.GLYPH_MIC_ACTIVITY_WHITELIST);
 
-        micData = ApplicationData.getMicApps(context.getApplicationContext());
-        mMicActivityWhitelistPreference.setEntries(micData.values().stream()
-                .map(ApplicationData::label)
-                .toArray(CharSequence[]::new));
+            micData = ApplicationData.getMicApps(context.getApplicationContext());
+            mMicActivityWhitelistPreference.setEntries(micData.values().stream()
+                    .map(ApplicationData::label)
+                    .toArray(CharSequence[]::new));
 
-        mMicActivityWhitelistPreference.setEntryValues(micData.keySet().toArray(CharSequence[]::new));
-        mMicActivityWhitelistPreference.setOnPreferenceChangeListener(this);
-        mMicActivityWhitelistPreference.setEnabled(glyphEnabled);
+            mMicActivityWhitelistPreference.setEntryValues(micData.keySet().toArray(CharSequence[]::new));
+            mMicActivityWhitelistPreference.setOnPreferenceChangeListener(this);
+            mMicActivityWhitelistPreference.setEnabled(glyphEnabled);
 
-        mRedLedModePreference = findPreference(Constants.GLYPH_RED_LED_MODE);
-        mRedLedModePreference.setOnPreferenceChangeListener(this);
-        mRedLedModePreference.setEnabled(glyphEnabled);
+            mRedLedModePreference = findPreference(Constants.GLYPH_RED_LED_MODE);
+            mRedLedModePreference.setOnPreferenceChangeListener(this);
+            mRedLedModePreference.setEnabled(glyphEnabled);
+        }
 
         mUtilitiesPreference = findPreference(Constants.GLYPH_UTILITIES);
 
