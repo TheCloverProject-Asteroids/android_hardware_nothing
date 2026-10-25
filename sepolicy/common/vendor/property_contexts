@@ -1,2 +1,7 @@
+# Face
+persist.vendor.debug.face_aidl     u:object_r:vendor_face_config_prop:s0
+persist.vendor.face.               u:object_r:vendor_face_config_prop:s0
+vendor.face                        u:object_r:vendor_face_config_prop:s0
+
 # Vibrator
 vendor.vibrator.    u:object_r:vendor_vibrator_prop:s0

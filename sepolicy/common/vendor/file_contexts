@@ -1,6 +1,9 @@
 # Charger
 /vendor/bin/hw/vendor\.noth\.hardware\.charge-service                 u:object_r:hal_nt_charger_exec:s0
 
+# Face
+/vendor/bin/hw/android\.hardware\.biometrics\.face-service\.noth    u:object_r:hal_face_default_exec:s0
+
 # Fingerprint
 /dev/goodix_fp                                                              u:object_r:fingerprint_device:s0
 /vendor/bin/hw/android.hardware\.biometrics\.fingerprint-service\.nothing   u:object_r:hal_fingerprint_default_exec:s0

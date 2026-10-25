@@ -1,2 +1,5 @@
+# Face
+vendor_internal_prop(vendor_face_config_prop)
+
 # Vibrator
 vendor_internal_prop(vendor_vibrator_prop);
