@@ -13,8 +13,6 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Handler
 import android.os.Looper
-import android.os.PowerManager
-import android.os.SystemClock
 import android.os.SystemProperties
 import android.util.Log
 
@@ -29,7 +27,6 @@ class PocketSensor(
     private val handler = Handler(Looper.getMainLooper())
     private val touchBlocker = TouchBlocker(context)
 
-    private var lastPulseTimestamp = 0L
     private var isCovered = false
     private var isRegistered = false
     private var isInteractive = true
@@ -46,13 +43,6 @@ class PocketSensor(
                 SystemProperties.set("sys.touch.pocket_mode", "0")
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to reset pocket mode", e)
-            }
-            if (!isInteractive) {
-                val delta = SystemClock.elapsedRealtime() - lastPulseTimestamp
-                if (delta >= MIN_PULSE_INTERVAL_MS) {
-                    lastPulseTimestamp = SystemClock.elapsedRealtime()
-                    Utils.launchDozePulse(context)
-                }
             }
         }
     }
@@ -179,7 +169,6 @@ class PocketSensor(
         private const val TAG = "PocketSensor"
         private const val DEBUG = true
 
-        private const val MIN_PULSE_INTERVAL_MS = 2500L
-        private const val DEBOUNCE_DELAY_MS = 300L
+        private const val DEBOUNCE_DELAY_MS = 400L
     }
 }

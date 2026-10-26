@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 The LineageOS Project
+ * Copyright (C) 2021-2026 The LineageOS Project
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -11,14 +11,15 @@ import com.android.settingslib.collapsingtoolbar.CollapsingToolbarBaseActivity
 class DozeSettingsActivity : CollapsingToolbarBaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        supportFragmentManager
-            .beginTransaction()
-            .replace(
-                com.android.settingslib.collapsingtoolbar.R.id.content_frame,
-                DozeSettingsFragment(),
-                TAG,
-            )
-            .commit()
+        @Suppress("DEPRECATION")
+        overridePendingTransition(0, 0)
+        val newState = !Utils.isPocketEnabled(this)
+        Utils.setPocketEnabled(this, newState)
+        Utils.checkDozeService(this)
+        DozeContentProvider.notifyPocketChanged(this)
+        finish()
+        @Suppress("DEPRECATION")
+        overridePendingTransition(0, 0)
     }
 
     companion object {

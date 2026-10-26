@@ -27,8 +27,6 @@
     <uses-permission android:name="android.permission.INTERNAL_SYSTEM_WINDOW" />
     <uses-permission android:name="android.permission.SUBSCRIBE_TO_KEYGUARD_LOCKED_STATE" />
 
-    <protected-broadcast android:name="com.android.systemui.doze.pulse" />
-
     <application
         android:label="@string/device_settings_app_name"
         android:persistent="true"

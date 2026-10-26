@@ -16,8 +16,6 @@ import androidx.preference.PreferenceManager
 object Utils {
     private const val TAG = "DozeUtils"
 
-    private const val DOZE_INTENT = "com.android.systemui.doze.pulse"
-
     const val GESTURE_POCKET_KEY = "gesture_pocket"
 
     private fun startService(context: Context) {
@@ -36,11 +34,6 @@ object Utils {
         } else {
             stopService(context)
         }
-    }
-
-    fun launchDozePulse(context: Context) {
-        Log.d(TAG, "Launch doze pulse")
-        context.sendBroadcastAsUser(Intent(DOZE_INTENT), UserHandle(UserHandle.USER_CURRENT))
     }
 
     fun isPocketEnabled(context: Context): Boolean {
