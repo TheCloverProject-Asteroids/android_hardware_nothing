@@ -209,39 +209,12 @@
     <string name="notification_sound_changed_notification_title">通知音效已變更</string>
     
 
-    <!-- Utilities -->
-    <string name="glyph_settings_utilities_title">實用工具</string>
-    <string name="glyph_settings_utilities_summary">額外的 Glyph 工具</string>
-    <string name="glyph_settings_utilities_ogg_title">OGG</string>
-
-    <string name="glyph_settings_utilities_export_csv_from_ogg_title">從 OGG 匯出 CSV</string>
-    <string name="glyph_settings_utilities_export_csv_from_ogg_summary">從包含動畫的 OGG 取得 CSV 檔案</string>
-    <string name="glyph_settings_utilities_read_ogg_title">讀取 OGG</string>
-    <string name="glyph_settings_utilities_read_ogg_summary">顯示 OGG 檔案中的中繼資料</string>
-
-    <string name="ogg_csv_export_notification_animation">儲存為通知動畫</string>
-    <string name="ogg_csv_export_call_animation">儲存為來電動畫</string>
-    <string name="ogg_csv_export_complete_message_start">檔案已儲存至：</string>
-
-    <string name="glyph_utilities_validate_csv_title">驗證 CSV</string>
-    <string name="glyph_utilities_validate_csv_summary">檢查 CSV 檔案是否有錯誤</string>
-
-    <string name="glyph_utilities_csv_title">CSV</string>
-
-    <string name="glyph_ogg_metadata_title">OGG 資訊</string>
-
-    <string name="metadata_device">裝置</string>
-
-    <string name="metadata_device_phone1_proper">Phone (1)</string>
-    <string name="metadata_device_phone2_proper">Phone (2)</string>
-    <string name="metadata_device_phone2a_proper">Phone (2a)</string>
-    <string name="metadata_device_phone3a_proper">Phone (3a)</string>
-
-    <string name="metadata_device_unsupported">不支援</string>
-    <string name="metadata_pattern_duration">動畫持續時間</string>
-    <string name="metadata_filename">檔案名稱</string>
-
     <string name="file_export_complete_message">檔案儲存成功！</string>
-    <string name="file_already_exported_summary">檔案已儲存</string>
+
+    <!-- Auto Generator -->
+    <string name="glyph_settings_auto_generate_title">自動產生器</string>
+    <string name="glyph_settings_auto_generate_summary">從任何音訊產生 Glyph 動畫</string>
+    <string name="glyph_utilities_auto_generate_title">自動產生器</string>
+    <string name="glyph_utilities_auto_generate_summary">從任何音訊產生 Glyph 動畫</string>
 
 </resources>

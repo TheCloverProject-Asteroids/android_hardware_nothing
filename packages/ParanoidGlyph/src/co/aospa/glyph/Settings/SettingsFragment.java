@@ -18,19 +18,27 @@
 
 package co.aospa.glyph.Settings;
 
+import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.ContentObserver;
+import android.media.MediaPlayer;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
+import android.util.Log;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.preference.MultiSelectListPreference;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
@@ -58,10 +66,18 @@ import co.aospa.glyph.Services.BatterySaverService;
 import static co.aospa.glyph.Utils.InterfaceUtils.showDialog;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
+import co.aospa.glyph.Utils.AnimationUtils;
+import co.aospa.glyph.Utils.AudioGlyphGenerator;
 import co.aospa.glyph.Utils.FileUtils;
 import co.aospa.glyph.Utils.InterfaceUtils;
 import co.aospa.glyph.Utils.ResourceUtils;
@@ -102,7 +118,39 @@ public class SettingsFragment extends SettingsBasePreferenceFragment implements 
     private static final long BRIGHTNESS_PREVIEW_TIMEOUT_MS = 3000;
     private final Runnable mStopBrightnessPreview = AnimationManager::clearLEDs;
 
-    private Preference mUtilitiesPreference;
+    private static final String TAG = "SettingsFragment";
+
+    private Preference mAutoGeneratorPreference;
+
+    // Auto Generator state
+    private String mGeneratedCsv;
+    private Uri mSelectedAudioUri;
+    private MediaPlayer mMediaPlayer;
+    private final ExecutorService mExecutor = Executors.newSingleThreadExecutor();
+    private Consumer<Uri> mFilePickerAction;
+    private static final String[] AUDIO_MIME = {"audio/*", "application/ogg"};
+
+    private final ActivityResultLauncher<String> mSaveCsvLauncher = registerForActivityResult(
+        new ActivityResultContracts.CreateDocument("text/csv"), uri -> {
+            if (uri != null && mGeneratedCsv != null) {
+                try (OutputStream os = requireContext().getContentResolver().openOutputStream(uri)) {
+                    os.write(mGeneratedCsv.getBytes(StandardCharsets.UTF_8));
+                    InterfaceUtils.showToast(getString(R.string.file_export_complete_message));
+                } catch (Exception e) {
+                    Log.e(TAG, "Failed to save CSV", e);
+                    InterfaceUtils.showToast("Failed to save CSV file!");
+                }
+            }
+        }
+    );
+
+    private final ActivityResultLauncher<String[]> mFilePicker = registerForActivityResult(
+        new ActivityResultContracts.OpenDocument(), uri -> {
+            if (uri != null && mFilePickerAction != null) {
+                mFilePickerAction.accept(uri);
+            }
+        }
+    );
 
     private CompletableFuture<Boolean> pendingConfirmation;
 
@@ -284,7 +332,11 @@ public class SettingsFragment extends SettingsBasePreferenceFragment implements 
             mRedLedModePreference.setEnabled(glyphEnabled);
         }
 
-        mUtilitiesPreference = findPreference(Constants.GLYPH_UTILITIES);
+        mAutoGeneratorPreference = findPreference(Constants.GLYPH_AUTO_GENERATE);
+        if (mAutoGeneratorPreference != null && !Constants.Device.isPhone3a()) {
+            mAutoGeneratorPreference.setEnabled(false);
+            mAutoGeneratorPreference.setSummary("Only supported on Phone (3a)");
+        }
 
         IntentFilter filter = new IntentFilter("co.aospa.glyph.UPDATE_MAIN_SWITCH");
         requireContext().registerReceiver(mScheduleUpdateReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
@@ -390,7 +442,7 @@ public class SettingsFragment extends SettingsBasePreferenceFragment implements 
             } else if (pref == (Preference) mBrightnessPreference) {
                 pref.setEnabled(!mAutoBrightnessPreference.isChecked() && isChecked);
             } else if (pref == (Preference) mBatterySaverPreference || pref == mSchedulePreference
-                    || pref == mUtilitiesPreference) {
+                    || pref == mAutoGeneratorPreference) {
                 ; // skip
             } else if (pref instanceof MainSwitchPreference m) {
                 ; // skip
@@ -431,6 +483,9 @@ public class SettingsFragment extends SettingsBasePreferenceFragment implements 
         if (Constants.GLYPH_NOTIFS_ENABLE.equals(preference.getKey())
                 || Constants.Essential.GLYPH_ESSENTIAL_NOTIFICATIONS.equals(preference.getKey())) {
             if (!checkNotificationService(true, preference, true)) return true;
+        } else if (Constants.GLYPH_AUTO_GENERATE.equals(preference.getKey())) {
+            showSourceSelectionDialog();
+            return true;
         }
         return super.onPreferenceTreeClick(preference);
     }
@@ -480,7 +535,15 @@ public class SettingsFragment extends SettingsBasePreferenceFragment implements 
     }
 
     @Override
+    public void onPause() {
+        stopLivePreview();
+        super.onPause();
+    }
+
+    @Override
     public void onDestroy() {
+        stopLivePreview();
+        mExecutor.shutdown();
         mSettingObserver.unregister(mContentResolver);
         try {
             requireContext().unregisterReceiver(mScheduleUpdateReceiver);
@@ -531,6 +594,244 @@ public class SettingsFragment extends SettingsBasePreferenceFragment implements 
             } else {
                  mSwitchBar.setSummary("");
             }
+        }
+    }
+
+    private void showSourceSelectionDialog() {
+        Context context = requireContext();
+        Uri ringtoneUri = RingtoneManager.getActualDefaultRingtoneUri(context, RingtoneManager.TYPE_RINGTONE);
+        if (ringtoneUri == null) {
+            String ringtoneSetting = Settings.System.getString(context.getContentResolver(), Settings.System.RINGTONE);
+            if (ringtoneSetting != null) {
+                ringtoneUri = Uri.parse(ringtoneSetting);
+            }
+        }
+
+        Uri notifUri = RingtoneManager.getActualDefaultRingtoneUri(context, RingtoneManager.TYPE_NOTIFICATION);
+        if (notifUri == null) {
+            String notifSetting = Settings.System.getString(context.getContentResolver(), Settings.System.NOTIFICATION_SOUND);
+            if (notifSetting != null) {
+                notifUri = Uri.parse(notifSetting);
+            }
+        }
+
+        String ringtoneTitle = getAudioTitle(ringtoneUri, getString(R.string.glyph_generator_source_default_ringtone));
+        String notifTitle = getAudioTitle(notifUri, getString(R.string.glyph_generator_source_default_notif));
+
+        String[] sources = new String[] {
+            String.format(getString(R.string.glyph_generator_source_ringtone), ringtoneTitle),
+            String.format(getString(R.string.glyph_generator_source_notif), notifTitle),
+            getString(R.string.glyph_generator_source_file)
+        };
+
+        final Uri finalRingtoneUri = ringtoneUri;
+        final String finalRingtoneTitle = ringtoneTitle;
+        final Uri finalNotifUri = notifUri;
+        final String finalNotifTitle = notifTitle;
+
+        new AlertDialog.Builder(requireActivity())
+                .setTitle(R.string.glyph_generator_source_title)
+                .setItems(sources, (dialog, which) -> {
+                    switch (which) {
+                        case 0 -> { // Current Ringtone
+                            if (finalRingtoneUri != null) {
+                                mSelectedAudioUri = finalRingtoneUri;
+                                showModeSelectionDialog(finalRingtoneUri, finalRingtoneTitle);
+                            } else {
+                                InterfaceUtils.showToast(getString(R.string.glyph_generator_no_ringtone));
+                            }
+                        }
+                        case 1 -> { // Current Notification
+                            if (finalNotifUri != null) {
+                                mSelectedAudioUri = finalNotifUri;
+                                showModeSelectionDialog(finalNotifUri, finalNotifTitle);
+                            } else {
+                                InterfaceUtils.showToast(getString(R.string.glyph_generator_no_notif));
+                            }
+                        }
+                        case 2 -> { // Choose Audio File
+                            mFilePickerAction = uri -> {
+                                mSelectedAudioUri = uri;
+                                showModeSelectionDialog(uri, null);
+                            };
+                            mFilePicker.launch(AUDIO_MIME);
+                        }
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private String getAudioTitle(Uri uri, String fallback) {
+        if (uri == null) return fallback;
+        try {
+            Ringtone r = RingtoneManager.getRingtone(requireContext(), uri);
+            if (r != null) {
+                String title = r.getTitle(requireContext());
+                if (title != null && !title.isEmpty()) {
+                    return title;
+                }
+            }
+        } catch (Exception ignored) {}
+        try {
+            String titleParam = uri.getQueryParameter("title");
+            if (titleParam != null && !titleParam.isEmpty()) {
+                return titleParam;
+            }
+        } catch (Exception ignored) {}
+        try {
+            String fileName = ResourceUtils.getFileName(requireContext(), uri);
+            if (fileName != null && !fileName.isEmpty() && !"audio".equals(fileName)) {
+                return fileName;
+            }
+        } catch (Exception ignored) {}
+        return fallback;
+    }
+
+    private void showModeSelectionDialog(Uri audioUri, String customDisplayName) {
+        String fileName = (customDisplayName != null && !customDisplayName.isEmpty())
+                ? customDisplayName
+                : ResourceUtils.getFileName(requireContext(), audioUri);
+        String[] modes = new String[] {
+            getString(R.string.glyph_generator_mode_beats),
+            getString(R.string.glyph_generator_mode_smooth),
+            getString(R.string.glyph_generator_mode_frequency),
+            getString(R.string.glyph_generator_mode_pattern)
+        };
+
+        final int[] selectedMode = new int[]{AudioGlyphGenerator.MODE_SMOOTH};
+
+        new AlertDialog.Builder(requireActivity())
+                .setTitle(getString(R.string.glyph_generator_dialog_title) + " - " + fileName)
+                .setSingleChoiceItems(modes, 1, (dialog, which) -> {
+                    selectedMode[0] = which;
+                })
+                .setPositiveButton(R.string.glyph_generator_action_generate, (dialog, which) -> {
+                    runGenerator(audioUri, selectedMode[0], fileName);
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private void runGenerator(Uri audioUri, int mode, String fileName) {
+        ProgressDialog progressDialog = new ProgressDialog(requireActivity());
+        progressDialog.setMessage(getString(R.string.glyph_generator_generating));
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+
+        mExecutor.submit(() -> {
+            try {
+                String csv = AudioGlyphGenerator.generateForPhone3a(requireContext(), audioUri, mode);
+                mHandler.post(() -> {
+                    progressDialog.dismiss();
+                    if (csv == null || csv.isEmpty()) {
+                        InterfaceUtils.showToast("Failed to generate Glyph animation!");
+                        return;
+                    }
+                    mGeneratedCsv = csv;
+                    showGeneratorResultDialog(audioUri, fileName, csv);
+                });
+            } catch (Exception e) {
+                Log.e(TAG, "Audio generation error", e);
+                mHandler.post(() -> {
+                    progressDialog.dismiss();
+                    InterfaceUtils.showToast("Error generating animation: " + e.getMessage());
+                });
+            }
+        });
+    }
+
+    private void showGeneratorResultDialog(Uri audioUri, String fileName, String csv) {
+        int[][] frames = AnimationUtils.parseCsvToFrames(csv);
+        int frameCount = frames != null ? frames.length : 0;
+        int durationSec = (int) Math.round(frameCount / 60.0);
+
+        String title = getString(R.string.glyph_generator_dialog_title);
+        String message = String.format(getString(R.string.glyph_generator_success), frameCount, durationSec);
+
+        String[] actions = new String[] {
+            getString(R.string.glyph_generator_action_preview),
+            getString(R.string.glyph_generator_action_apply_call),
+            getString(R.string.glyph_generator_action_apply_notif),
+            getString(R.string.glyph_generator_action_export_csv)
+        };
+
+        AlertDialog dialog = new AlertDialog.Builder(requireActivity())
+                .setTitle(title)
+                .setMessage(message + "\n\nFile: " + fileName)
+                .setItems(actions, (d, which) -> {
+                    switch (which) {
+                        case 0 -> { // Live Preview
+                            startLivePreview(audioUri, frames);
+                        }
+                        case 1 -> { // Apply to Call
+                            AnimationUtils.Holder.Call.setCsv(csv, true);
+                            saveCsvToDirectory(csv, fileName, Constants.GLYPH_USER_CALL_CSV_PATH);
+                            AnimationManager.clearCallAnimationCache();
+                            InterfaceUtils.showToast(getString(R.string.glyph_generator_applied_call));
+                        }
+                        case 2 -> { // Apply to Notification
+                            AnimationUtils.Holder.Notification.setCsv(csv, true);
+                            saveCsvToDirectory(csv, fileName, Constants.GLYPH_USER_NOTIF_CSV_PATH);
+                            InterfaceUtils.showToast(getString(R.string.glyph_generator_applied_notif));
+                        }
+                        case 3 -> { // Export CSV
+                            int dot = fileName.lastIndexOf('.');
+                            String baseName = dot != -1 ? fileName.substring(0, dot) : fileName;
+                            mSaveCsvLauncher.launch(baseName + "_phone3a.csv");
+                        }
+                    }
+                })
+                .setNegativeButton(android.R.string.ok, (d, w) -> stopLivePreview())
+                .setOnDismissListener(d -> stopLivePreview())
+                .create();
+
+        dialog.show();
+    }
+
+    private void startLivePreview(Uri audioUri, int[][] frames) {
+        stopLivePreview();
+        try {
+            mMediaPlayer = new MediaPlayer();
+            mMediaPlayer.setDataSource(requireContext(), audioUri);
+            mMediaPlayer.prepare();
+            mMediaPlayer.setOnCompletionListener(mp -> stopLivePreview());
+            mMediaPlayer.start();
+
+            if (frames != null && frames.length > 0) {
+                mExecutor.submit(() -> AnimationManager.playCallSynced(frames, false));
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to start live preview", e);
+            InterfaceUtils.showToast("Failed to start live preview");
+        }
+    }
+
+    private void stopLivePreview() {
+        if (mMediaPlayer != null) {
+            try {
+                if (mMediaPlayer.isPlaying()) {
+                    mMediaPlayer.stop();
+                }
+                mMediaPlayer.release();
+            } catch (Exception ignored) {}
+            mMediaPlayer = null;
+        }
+        AnimationManager.stopCall();
+    }
+
+    private void saveCsvToDirectory(String csv, String fileName, String subPath) {
+        try {
+            int dot = fileName.lastIndexOf('.');
+            String baseName = dot != -1 ? fileName.substring(0, dot) : fileName;
+            File dir = new File(Environment.getExternalStorageDirectory(), subPath);
+            if (!dir.exists()) dir.mkdirs();
+            File file = new File(dir, baseName + ".csv");
+            try (FileWriter writer = new FileWriter(file)) {
+                writer.write(csv);
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Could not save CSV to " + subPath, e);
         }
     }
 

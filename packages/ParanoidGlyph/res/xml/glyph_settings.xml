@@ -239,16 +239,10 @@
     <PreferenceCategory>
 
         <Preference
-            android:key="glyph_settings_utilities"
-            android:icon="@drawable/ic_build"
-            android:title="@string/glyph_settings_utilities_title"
-            android:summary="@string/glyph_settings_utilities_summary">
-            <intent android:action="android.intent.action.MAIN"
-                android:targetPackage="co.aospa.glyph"
-                android:targetClass="co.aospa.glyph.Settings.SubSettingsActivity">
-                <extra android:name="fragment" android:value=".Settings.Utilities.UtilitiesFragment" />
-            </intent>
-        </Preference>
+            android:key="glyph_settings_auto_generate"
+            android:icon="@drawable/ic_tune"
+            android:title="@string/glyph_settings_auto_generate_title"
+            android:summary="@string/glyph_settings_auto_generate_summary" />
 
     </PreferenceCategory>
 

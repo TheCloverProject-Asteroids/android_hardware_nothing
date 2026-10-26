@@ -106,14 +106,7 @@ public final class Constants {
     public static final String GLYPH_CALL_APP_PREF_PREFIX = "call_";
     public static final String GLYPH_NOTIF_APP_PREF_PREFIX = "notif_";
 
-    public static final String GLYPH_OGG_LIVE_PREVIEW = "glyph_utilities_ogg_live_preview";
-
-    public static final String GLYPH_UTILITIES = "glyph_settings_utilities";
-
-    public static final String GLYPH_UTILITIES_VALIDATE_CSV = "glyph_utilities_validate_csv";
-    public static final String GLYPH_UTILITIES_READ_OGG = "glyph_utilities_read_ogg";
-    public static final String GLYPH_UTILITIES_OGG_EXPORT_CSV = "glyph_utilities_export_csv_from_ogg";
-    public static final String GLYPH_UTILITIES_AUTO_GENERATE = "glyph_utilities_auto_generate";
+    public static final String GLYPH_AUTO_GENERATE = "glyph_settings_auto_generate";
 
     public static class Essential {
         public static final String GLYPH_ESSENTIAL_NOTIFICATIONS = "glyph_settings_essential_notifications";

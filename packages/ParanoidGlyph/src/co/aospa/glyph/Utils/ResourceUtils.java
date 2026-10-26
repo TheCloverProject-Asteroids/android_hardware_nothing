@@ -216,7 +216,7 @@ public final class ResourceUtils {
                 ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
                 Uri.encode(number));
 
-        Cursor cursor = context.getContentResolver().query(
+        Cursor cursor = getContext().getContentResolver().query(
                 uri,
                 new String[]{ContactsContract.PhoneLookup.CONTACT_ID},
                 null, null, null);

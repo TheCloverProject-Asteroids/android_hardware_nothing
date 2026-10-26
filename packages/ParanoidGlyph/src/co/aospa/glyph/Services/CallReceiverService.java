@@ -37,6 +37,7 @@ import co.aospa.glyph.Utils.ResourceUtils;
 
 import co.aospa.glyph.Manager.StatusManager;
 import co.aospa.glyph.Utils.AnimationUtils;
+import co.aospa.glyph.Utils.FileUtils;
 
 public class CallReceiverService extends InCallService {
 
@@ -88,7 +89,8 @@ public class CallReceiverService extends InCallService {
     public void onCallAdded(Call call) {
         super.onCallAdded(call);
 
-        if (call.getDetails() != null && call.getDetails().getState() == Call.STATE_RINGING) {
+        if (call.getState() == Call.STATE_RINGING
+                || (call.getDetails() != null && call.getDetails().getState() == Call.STATE_RINGING)) {
             handleRingingCall(call);
         }
 
@@ -115,7 +117,7 @@ public class CallReceiverService extends InCallService {
         final Call.Details details = call.getDetails();
         mThreadHandler.post(() -> {
             if (!mIsRinging) return;
-            if (details != null) {
+            if (details != null && SettingsManager.hasAnyContactCallConfig()) {
                 tryContactId(details);
             }
             if (!mIsRinging) return;
@@ -137,10 +139,20 @@ public class CallReceiverService extends InCallService {
         Looper looper = thread.getLooper();
         mThreadHandler = new Handler(looper);
 
+        mThreadHandler.post(() -> {
+            if (SettingsManager.isGlyphRingtoneSyncEnabled()) {
+                AnimationUtils.Holder.Call.isAvailable();
+            }
+            String defaultAnim = SettingsManager.getGlyphCallAnimation();
+            if (defaultAnim != null) {
+                AnimationManager.warmCallFramesCache(defaultAnim);
+            }
+            FileUtils.setOperatingMode(1);
+        });
+
         mAudioManager = getSystemService(AudioManager.class);
         mAudioManager.addOnModeChangedListener(cmd ->
                 mThreadHandler.post(cmd), mAudioManagerOnModeChangedListener);
-        mAudioManagerOnModeChangedListener.onModeChanged(mAudioManager.getMode());
     }
 
     @Override
@@ -213,8 +225,8 @@ public class CallReceiverService extends InCallService {
 
     private final AudioManager.OnModeChangedListener mAudioManagerOnModeChangedListener
             = mode -> {
-                if (mode != AudioManager.MODE_RINGTONE) {
-                    if (DEBUG) Log.d(TAG, "mAudioManagerOnModeChangedListener: " + mode);
+                if (mode == AudioManager.MODE_IN_CALL || mode == AudioManager.MODE_IN_COMMUNICATION) {
+                    if (DEBUG) Log.d(TAG, "mAudioManagerOnModeChangedListener call answered: " + mode);
                     disableCallAnimation();
                 }
             };

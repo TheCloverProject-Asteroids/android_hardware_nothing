@@ -62,6 +62,19 @@ public final class AnimationManager {
         sCallFramesCache.clear();
     }
 
+    public static void warmCallFramesCache(String name) {
+        if (name == null || sCallFramesCache.containsKey(name)) return;
+        try (InputStream is = ResourceUtils.getCallAnimation(name)) {
+            if (is != null) {
+                String csv = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+                int[][] frames = AnimationUtils.parseCsvToFrames(csv);
+                if (frames != null) {
+                    sCallFramesCache.put(name, frames);
+                }
+            }
+        } catch (Exception ignored) {}
+    }
+
     private static final ExecutorService sExecutor = Executors.newSingleThreadExecutor();
     public static final long FRAME_INTERVAL_NANOS = 16_666_667L; // 60 FPS (~16.666 ms)
 

@@ -173,6 +173,14 @@ public final class SettingsManager {
                 .getAll().isEmpty();
     }
 
+    public static boolean hasAnyContactCallConfig() {
+        Context ctx = getContext();
+        File prefsDir = new File(ctx.getDataDir(), "shared_prefs");
+        if (!prefsDir.exists() || !prefsDir.isDirectory()) return false;
+        String[] files = prefsDir.list((dir, name) -> name.startsWith(Constants.GLYPH_CALL_CONTACT_PREF_PREFIX));
+        return files != null && files.length > 0;
+    }
+
     public static String getGlyphCallAnimation() {
         Context ctx = getContext();
         return PreferenceManager.getDefaultSharedPreferences(ctx)
