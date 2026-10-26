@@ -10,6 +10,8 @@ ifeq ($(BOARD_USES_QCOM_HARDWARE),true)
 BOARD_VENDOR_SEPOLICY_DIRS += $(HW_NOTHING_PATH)/sepolicy/qcom/vendor
 endif
 
+$(call soong_config_set,camera,package_name,com.nothing.device.package_name)
+
 ifneq ($(filter NothingEsimSwitcher ,$(PRODUCT_PACKAGES)),)
 SYSTEM_EXT_PRIVATE_SEPOLICY_DIRS += $(HW_NOTHING_PATH)/sepolicy/esimswitcher/private
 endif
