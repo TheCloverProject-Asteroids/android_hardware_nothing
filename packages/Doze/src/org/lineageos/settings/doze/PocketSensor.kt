@@ -111,8 +111,7 @@ class PocketSensor(
 
     fun onDisplayOff() {
         isInteractive = false
-        touchBlocker.disable()
-        enable()
+        disable()
     }
 
     fun onUserUnlocked() {

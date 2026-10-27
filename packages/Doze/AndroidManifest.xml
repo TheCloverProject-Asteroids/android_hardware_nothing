@@ -28,7 +28,7 @@
     <uses-permission android:name="android.permission.SUBSCRIBE_TO_KEYGUARD_LOCKED_STATE" />
 
     <application
-        android:label="@string/device_settings_app_name"
+        android:label="@string/prevent_accidental_touches_title"
         android:persistent="true"
         android:theme="@style/Theme.SubSettingsBase.Expressive">
 
@@ -53,35 +53,16 @@
             android:name=".DozeContentProvider"
             android:authorities="org.lineageos.settings.doze.provider"
             android:exported="true"
-            android:multiprocess="false" />
+            android:multiprocess="false">
+            <intent-filter>
+                <action android:name="com.android.settings.action.IA_SETTINGS" />
+            </intent-filter>
+        </provider>
 
         <activity
             android:name=".DozeSettingsActivity"
-            android:exported="true"
-            android:label="@string/pocket_gesture_title">
-            <intent-filter>
-                <action android:name="org.lineageos.settings.device.DOZE_SETTINGS" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="com.android.settings.action.IA_SETTINGS" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-            <meta-data
-                android:name="com.android.settings.category"
-                android:value="com.android.settings.category.ia.display" />
-            <meta-data
-                android:name="com.android.settings.group_key"
-                android:value="category_lock_display" />
-            <meta-data
-                android:name="com.android.settings.keyhint"
-                android:value="gesture_pocket" />
-            <meta-data
-                android:name="com.android.settings.switch_uri"
-                android:value="content://org.lineageos.settings.doze.provider" />
-            <meta-data
-                android:name="com.android.settings.summary"
-                android:value="@string/pocket_gesture_summary" />
+            android:exported="false"
+            android:label="@string/prevent_accidental_touches_title">
         </activity>
 
     </application>

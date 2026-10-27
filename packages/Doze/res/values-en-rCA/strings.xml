@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2026 The LineageOS Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources>
+    <string name="prevent_accidental_touches_title">Prevent accidental touches</string>
+    <string name="prevent_accidental_touches_summary">Prevent accidental touches while device is in pocket</string>
+    <string name="pocket_gesture_title">Prevent accidental touches</string>
+    <string name="pocket_gesture_summary">Prevent accidental touches while device is in pocket</string>
+</resources>

@@ -11,15 +11,7 @@ import com.android.settingslib.collapsingtoolbar.CollapsingToolbarBaseActivity
 class DozeSettingsActivity : CollapsingToolbarBaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        @Suppress("DEPRECATION")
-        overridePendingTransition(0, 0)
-        val newState = !Utils.isPocketEnabled(this)
-        Utils.setPocketEnabled(this, newState)
-        Utils.checkDozeService(this)
-        DozeContentProvider.notifyPocketChanged(this)
         finish()
-        @Suppress("DEPRECATION")
-        overridePendingTransition(0, 0)
     }
 
     companion object {
