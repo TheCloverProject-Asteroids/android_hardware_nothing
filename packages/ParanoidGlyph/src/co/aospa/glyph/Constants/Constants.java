@@ -108,6 +108,8 @@ public final class Constants {
 
     public static final String GLYPH_AUTO_GENERATE = "glyph_settings_auto_generate";
 
+    public static final String GLYPH_NOTIFS_APP_GLOBAL_ANIMATION_ENABLE = "glyph_settings_notifications_global_animation";
+
     public static class Essential {
         public static final String GLYPH_ESSENTIAL_NOTIFICATIONS = "glyph_settings_essential_notifications";
 
