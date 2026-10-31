@@ -113,15 +113,15 @@ class NrEnablerService : Service() {
 
         if (config == null) {
             if (mode == NR_CONFIG_UNKNOWN) {
-                Log.d(TAG, "get5GMode: no carrier config, default SA disabled")
-                mode = NrConfig.NR_CONFIG_NSA
+                Log.d(TAG, "get5GMode: no carrier config, default to combined SA/NSA")
+                mode = NrConfig.NR_CONFIG_COMBINED_SA_NSA
             }
         } else {
             val supportsSa = config.getIntArray(
                 CarrierConfigManager.KEY_CARRIER_NR_AVAILABILITIES_INT_ARRAY,
             )?.contains(CarrierConfigManager.CARRIER_NR_AVAILABILITY_SA) == true
             val hideSa = config.getBoolean(NT_HIDE_5G_STANDALONE_BOOL, false)
-            val defaultSaEnabled = config.getBoolean(NT_CARRIER_DEFAULT_SA_ENABLED_BOOL, false)
+            val defaultSaEnabled = config.getBoolean(NT_CARRIER_DEFAULT_SA_ENABLED_BOOL, true)
 
             Log.d(
                 TAG,
@@ -131,20 +131,15 @@ class NrEnablerService : Service() {
 
             mode = when {
                 !supportsSa -> NrConfig.NR_CONFIG_NSA
-                hideSa || mode == NR_CONFIG_UNKNOWN -> {
-                    if (defaultSaEnabled) {
-                        NrConfig.NR_CONFIG_COMBINED_SA_NSA
-                    } else {
-                        NrConfig.NR_CONFIG_NSA
-                    }
-                }
-                else -> mode
+                mode != NR_CONFIG_UNKNOWN -> mode
+                hideSa && !defaultSaEnabled -> NrConfig.NR_CONFIG_NSA
+                else -> NrConfig.NR_CONFIG_COMBINED_SA_NSA
             }
         }
 
         if (mode != NrConfig.NR_CONFIG_COMBINED_SA_NSA && mode != NrConfig.NR_CONFIG_NSA) {
-            Log.d(TAG, "get5GMode: unexpected mode=$mode, default SA disabled")
-            mode = NrConfig.NR_CONFIG_NSA
+            Log.d(TAG, "get5GMode: unexpected mode=$mode, default to combined SA/NSA")
+            mode = NrConfig.NR_CONFIG_COMBINED_SA_NSA
         }
         return mode
     }
