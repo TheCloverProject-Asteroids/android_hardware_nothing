@@ -322,6 +322,7 @@ typedef struct fingerprint_module {
 
 #ifdef TARGET_USES_LHBM 
 #define PANEL_LHBM_PATH "/proc/touchpanel/fod_mode"
+#define PANEL_FP_STATUS_PATH "/sys/panel_feature/fp_status"
 
 void setFOD(int val);
 

@@ -21,9 +21,17 @@ void setFOD(int val) {
     std::string str = std::to_string(val);
     if (!::android::base::WriteStringToFile(str, PANEL_LHBM_PATH)) {
         ALOGW("setFOD: failed to write %d: %s", val, strerror(errno));
-        return;
+    } else {
+        ALOGD("set fod_mode: %d", val);
     }
-    ALOGD("set fod_mode: %d", val);
+
+    if (val == FOD_FINISHED || val == FOD_OFF) {
+        if (!::android::base::WriteStringToFile("0", PANEL_FP_STATUS_PATH)) {
+            ALOGW("setFOD: failed to write 0 to %s: %s", PANEL_FP_STATUS_PATH, strerror(errno));
+        } else {
+            ALOGD("set fp_status: 0");
+        }
+    }
 }
 #endif
 
@@ -163,7 +171,7 @@ ndk::ScopedAStatus Session::resetLockout(const HardwareAuthToken& hat) {
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus Session::onPointerDown(int32_t /*pointerId*/, int32_t x, int32_t y, float minor,
+ndk::ScopedAStatus Session::onPointerDown(int32_t pointerId, int32_t x, int32_t y, float minor,
                                           float major) {
     ALOGI("onPointerDown: x=%d, y=%d, minor=%f, major=%f", x, y, minor, major);
 #ifdef TARGET_USES_LHBM 
@@ -172,15 +180,25 @@ ndk::ScopedAStatus Session::onPointerDown(int32_t /*pointerId*/, int32_t x, int3
     ::android::base::WriteStringToFile("1", "/sys/panel_feature/ui_status");
 #endif
 
+    if (mDevice->onPointerDown) {
+        mDevice->onPointerDown(mDevice, pointerId, x, y, minor, major);
+    }
+
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus Session::onPointerUp(int32_t /*pointerId*/) {
+ndk::ScopedAStatus Session::onPointerUp(int32_t pointerId) {
     ALOGI("onPointerUp");
 
-#ifndef TARGET_USES_LHBM 
+#ifdef TARGET_USES_LHBM 
+    ::android::base::WriteStringToFile("0", PANEL_FP_STATUS_PATH);
+#else
     ::android::base::WriteStringToFile("0", "/sys/panel_feature/ui_status");
 #endif
+
+    if (mDevice->onPointerUp) {
+        mDevice->onPointerUp(mDevice, pointerId);
+    }
 
     return ndk::ScopedAStatus::ok();
 }
@@ -225,13 +243,25 @@ ndk::ScopedAStatus Session::onContextChanged(const common::OperationContext& /*c
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus Session::onPointerCancelWithContext(const PointerContext& /*context*/) {
-    return ndk::ScopedAStatus::ok();
+ndk::ScopedAStatus Session::onPointerCancelWithContext(const PointerContext& context) {
+    ALOGI("onPointerCancelWithContext");
+
+#ifdef TARGET_USES_LHBM
+    setFOD(FOD_FINISHED);
+#else
+    ::android::base::WriteStringToFile("0", "/sys/panel_feature/ui_status");
+#endif
+
+    return onPointerUpWithContext(context);
 }
 
 ndk::ScopedAStatus Session::setIgnoreDisplayTouches(bool shouldIgnore) {
-
     ALOGI("Set ignore display touches: %d", shouldIgnore);
+
+    if (mDevice->setIgnoreDisplayTouches) {
+        mDevice->setIgnoreDisplayTouches(mDevice, shouldIgnore);
+    }
+
 #ifdef TARGET_USES_LHBM
     setFOD(shouldIgnore ? FOD_FINISHED : FOD_ENABLE);
 #endif
@@ -389,6 +419,9 @@ void Session::notify(const fingerprint_msg_t* msg) {
             int32_t vendorCode = 0;
             Error result = VendorErrorFilter(msg->data.error, &vendorCode);
             ALOGD("onError(%hhd, %d)", result, vendorCode);
+#ifdef TARGET_USES_LHBM
+            setFOD(FOD_FINISHED);
+#endif
             mCb->onError(result, vendorCode);
         } break;
         case FINGERPRINT_ACQUIRED: {
