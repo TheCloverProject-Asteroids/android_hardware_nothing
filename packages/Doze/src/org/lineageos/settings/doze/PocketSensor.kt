@@ -117,12 +117,14 @@ class PocketSensor(
     fun onUserUnlocked() {
         Log.d(TAG, "onUserUnlocked: disabling blocker and unregistering sensor")
         handler.removeCallbacks(uncoverRunnable)
-        isCovered = false
-        touchBlocker.disable()
-        try {
-            SystemProperties.set("sys.touch.pocket_mode", "0")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to reset pocket mode", e)
+        if (isCovered) {
+            isCovered = false
+            touchBlocker.disable()
+            try {
+                SystemProperties.set("sys.touch.pocket_mode", "0")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to reset pocket mode", e)
+            }
         }
         if (isInteractive) {
             disable()
@@ -154,12 +156,14 @@ class PocketSensor(
             isRegistered = false
             handler.removeCallbacks(uncoverRunnable)
             sensorManager.unregisterListener(this, sensor)
-            isCovered = false
-            touchBlocker.disable()
-            try {
-                SystemProperties.set("sys.touch.pocket_mode", "0")
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to reset pocket mode", e)
+            if (isCovered) {
+                isCovered = false
+                touchBlocker.disable()
+                try {
+                    SystemProperties.set("sys.touch.pocket_mode", "0")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to reset pocket mode", e)
+                }
             }
         }
     }
